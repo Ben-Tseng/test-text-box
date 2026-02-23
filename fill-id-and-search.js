@@ -100,25 +100,75 @@
     }
   }
 
-  async function waitSearchInput(timeoutMs = 8000) {
+  function centerOf(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function distance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function pickBestSearchInput(inputs, dropdown) {
+    if (!inputs.length) return null;
+    const dropdownCenter = centerOf(dropdown);
+    let best = null;
+    let bestScore = -Infinity;
+    for (const el of inputs) {
+      const p = norm(el.getAttribute("placeholder"));
+      const a = norm(el.getAttribute("aria-label"));
+      const exact = p === "searchvalue" || a === "searchvalue";
+      const scoreByText = exact ? 100 : 10;
+      const scoreByDistance = -distance(centerOf(el), dropdownCenter);
+      const score = scoreByText + scoreByDistance;
+      if (score > bestScore) {
+        bestScore = score;
+        best = el;
+      }
+    }
+    return best;
+  }
+
+  async function waitSearchInput(dropdown, timeoutMs = 8000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
+      const allVisibleInputs = [];
       for (const root of getRoots(document)) {
         const inputs = queryAllDeep(root, 'input[placeholder="Search value"], input[aria-label="Search value"], input[type="text"]');
-        const target = inputs.find((el) => isVisible(el) && !el.disabled);
-        if (target) return target;
+        allVisibleInputs.push(...inputs.filter((el) => isVisible(el) && !el.disabled));
       }
+      const target = pickBestSearchInput(allVisibleInputs, dropdown);
+      if (target) return target;
       await sleep(120);
     }
     return null;
   }
 
   function setReactInputValue(input, value) {
-    const proto = Object.getPrototypeOf(input);
-    const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
-    if (setter) setter.call(input, value);
-    else input.value = value;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )?.set;
+    const previous = input.value;
+
+    input.focus();
+    input.select?.();
+
+    if (nativeSetter) nativeSetter.call(input, "");
+    else input.value = "";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
+
+    // 优先走真实输入路径，部分 React/MUI 组件只认它。
+    const inserted = document.execCommand && document.execCommand("insertText", false, value);
+    if (!inserted || input.value !== value) {
+      if (nativeSetter) nativeSetter.call(input, value);
+      else input.value = value;
+      const tracker = input._valueTracker;
+      if (tracker) tracker.setValue(previous);
+      input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: value }));
+    }
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
@@ -156,17 +206,20 @@
   openDropdownWithMouseSequence(dropdown);
   await sleep(220);
 
-  let searchInput = await waitSearchInput(1200);
+  let searchInput = await waitSearchInput(dropdown, 1200);
   if (!searchInput) {
     // 兜底再触发一次，处理偶发首次未展开。
     openDropdownWithMouseSequence(dropdown);
     await sleep(220);
-    searchInput = await waitSearchInput(10000);
+    searchInput = await waitSearchInput(dropdown, 10000);
   }
   if (!searchInput) throw new Error("下拉已点击，但找不到 Search value 输入框。");
 
   searchInput.focus();
   setReactInputValue(searchInput, idValue);
+  if ((searchInput.value || "").trim() !== idValue) {
+    throw new Error(`ID 未成功写入搜索框。当前值: "${searchInput.value || ""}"`);
+  }
   await sleep(120);
 
   const searchBtn = await waitSearchButton(10000);
