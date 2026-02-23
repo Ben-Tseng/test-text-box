@@ -93,17 +93,35 @@
     return bestScore >= 4 ? best : null;
   }
 
-  function getIdValue() {
+  async function getIdValue() {
+    const clean = (v) =>
+      String(v || "")
+        .replace(/\u00a0/g, " ")
+        .replace(/[\r\n\t]/g, "")
+        .trim();
+
     if (SOURCE_INPUT_SELECTOR) {
       const src = document.querySelector(SOURCE_INPUT_SELECTOR);
       if (!src) throw new Error(`找不到来源文本框: ${SOURCE_INPUT_SELECTOR}`);
       const v = "value" in src ? src.value : src.textContent;
-      if (!v || !String(v).trim()) throw new Error("来源文本框为空，请先输入 ID。");
-      return String(v).trim();
+      const out = clean(v);
+      if (!out) throw new Error("来源文本框为空，请先输入 ID。");
+      return out;
     }
-    const v = window.prompt("请输入要搜索的 ID（可多值，按你的页面支持格式输入）:", "");
-    if (!v || !v.trim()) throw new Error("未输入 ID，已取消。");
-    return v.trim();
+    // 优先读取系统剪贴板（需要在用户手势后/安全上下文中允许）。
+    try {
+      if (navigator.clipboard?.readText) {
+        const clip = clean(await navigator.clipboard.readText());
+        if (clip) return clip;
+      }
+    } catch (_) {
+      // ignore and fallback to prompt
+    }
+
+    const v = window.prompt("请输入要搜索的 ID（可直接粘贴）:", "");
+    const out = clean(v);
+    if (!out) throw new Error("未输入 ID，已取消。");
+    return out;
   }
 
   function openDropdownWithMouseSequence(el) {
@@ -159,59 +177,84 @@
     return null;
   }
 
-  function setReactInputValue(input, value) {
+  async function typeIntoAutocomplete(input, value) {
     const nativeSetter = Object.getOwnPropertyDescriptor(
       window.HTMLInputElement.prototype,
       "value"
     )?.set;
-    const previous = input.value;
+    const setValue = (v) => {
+      if (nativeSetter) nativeSetter.call(input, v);
+      else input.value = v;
+    };
 
     input.focus();
-    input.select?.();
+    input.click();
+    await sleep(60);
 
-    if (nativeSetter) nativeSetter.call(input, "");
-    else input.value = "";
+    // 清空旧值
+    setValue("");
     input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
+    await sleep(40);
 
-    // 优先走真实输入路径，部分 React/MUI 组件只认它。
-    const inserted = document.execCommand && document.execCommand("insertText", false, value);
-    if (!inserted || input.value !== value) {
-      if (nativeSetter) nativeSetter.call(input, value);
-      else input.value = value;
-      const tracker = input._valueTracker;
-      if (tracker) tracker.setValue(previous);
-      input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: value }));
+    // 逐字符输入，触发 MUI Autocomplete 的内部监听
+    let current = "";
+    for (const ch of String(value)) {
+      current += ch;
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: ch, bubbles: true }));
+      setValue(current);
+      input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: ch }));
+      input.dispatchEvent(new KeyboardEvent("keyup", { key: ch, bubbles: true }));
+      await sleep(25);
     }
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+
+    // 通知控件输入结束
+    input.dispatchEvent(new Event("blur", { bubbles: true }));
+    input.focus();
   }
 
-  async function waitSearchButton(timeoutMs = 8000) {
+  function findPanelRoot(searchInput, dropdown) {
+    const fromInput = searchInput?.closest(
+      '.MuiPopover-paper, .MuiMenu-paper, .MuiPaper-root, [role="dialog"], [role="presentation"]'
+    );
+    if (fromInput) return fromInput;
+
+    const fromDropdown = dropdown?.closest(
+      '.MuiPopover-paper, .MuiMenu-paper, .MuiPaper-root, [role="dialog"], [role="presentation"]'
+    );
+    if (fromDropdown) return fromDropdown;
+
+    return document;
+  }
+
+  async function waitSearchButton(scopeRoot, timeoutMs = 8000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
-      for (const root of getRoots(document)) {
-        const btns = queryAllDeep(root, 'button, [role="button"]');
-        const btn = btns.find((el) => {
-          if (!isVisible(el)) return false;
-          const t = norm(
-            [
-              el.getAttribute("data-automation-id"),
-              el.getAttribute("aria-label"),
-              el.getAttribute("title"),
-              el.textContent,
-            ]
-              .filter(Boolean)
-              .join(" ")
-          );
-          return t.includes("paginatedsearchcomponentsearch") || t === "search" || t.endsWith("search");
-        });
-        if (btn) return btn;
-      }
+      const btns = queryAllDeep(scopeRoot, 'button, [role="button"]');
+      const btn = btns.find((el) => {
+        if (!isVisible(el)) return false;
+        const t = norm(
+          [
+            el.getAttribute("data-automation-id"),
+            el.getAttribute("aria-label"),
+            el.getAttribute("title"),
+            el.textContent,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+        return (
+          t.includes("paginatedsearchcomponentsearch") ||
+          t === "search" ||
+          t.endsWith("search")
+        );
+      });
+      if (btn) return btn;
       await sleep(120);
     }
     return null;
   }
 
-  const idValue = getIdValue();
+  const idValue = await getIdValue();
   const dropdown = pickDropdown();
   if (!dropdown) throw new Error("找不到下拉按钮（All 右侧三角）。");
 
@@ -229,15 +272,22 @@
   if (!searchInput) throw new Error("下拉已点击，但找不到 Search value 输入框。");
 
   searchInput.focus();
-  setReactInputValue(searchInput, idValue);
+  await typeIntoAutocomplete(searchInput, idValue);
   if ((searchInput.value || "").trim() !== idValue) {
     throw new Error(`ID 未成功写入搜索框。当前值: "${searchInput.value || ""}"`);
   }
-  await sleep(120);
+  await sleep(250);
 
-  const searchBtn = await waitSearchButton(10000);
+  const panelRoot = findPanelRoot(searchInput, dropdown);
+  const searchBtn = await waitSearchButton(panelRoot, 10000);
   if (!searchBtn) throw new Error("已填入 ID，但找不到 Search 按钮。");
 
-  searchBtn.click();
+  // 点击前再次兜底，防止输入值被页面逻辑清空。
+  if ((searchInput.value || "").trim() !== idValue) {
+    await typeIntoAutocomplete(searchInput, idValue);
+    await sleep(120);
+  }
+
+  openDropdownWithMouseSequence(searchBtn);
   console.log("完成：已填入 ID 并点击 Search。", { idValue });
 })();
