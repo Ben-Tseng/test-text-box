@@ -7,7 +7,7 @@
 (async () => {
   const TARGET_URL =
     "https://eu-west-1.quicksight.aws.amazon.com/sn/account/amazonbi/dashboards/1c33135c-4187-40aa-98a9-26720ea3678f/sheets/1c33135c-4187-40aa-98a9-26720ea3678f_77e89b5c-5e2d-46e4-a095-e8365b0299af";
-  const INITIAL_PAGE_SETTLE_MS = 3000;
+  const INITIAL_PAGE_SETTLE_MS = 10000;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const norm = (s) => (s || "").toLowerCase().replace(/[\s._-]+/g, "");
@@ -115,28 +115,37 @@
     );
   }
 
+  function isControlsExpanded(doc) {
+    const expandedNode = doc.querySelector(
+      '#sheet_control_panel_header[aria-expanded="true"], [data-automation-id="sheet-control-panel-toggle-expand"][aria-expanded="true"]'
+    );
+    if (expandedNode) return true;
+
+    // Fallback: if known controls inside panel are already present, treat as expanded.
+    const hasInnerControl =
+      doc.querySelector('[data-automation-id*="search_results_dropdown"]') ||
+      doc.querySelector('[data-automation-id*="sheet control search results dropdown"]') ||
+      doc.querySelector('[data-automation-id*="sheet control menu button"]');
+    return Boolean(hasInnerControl);
+  }
+
   async function ensureControlsExpanded(doc, win, timeoutMs = 15000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
+      if (isControlsExpanded(doc)) return;
+
       const toggle = findControlsToggle(doc, win);
-      if (!toggle) {
+      if (!toggle || !isVisible(win, toggle)) {
         await sleep(150);
         continue;
       }
 
-      const expandedAttr =
-        (toggle.getAttribute("aria-expanded") ||
-          toggle.closest("[aria-expanded]")?.getAttribute("aria-expanded") ||
-          "")
-          .toLowerCase();
-
-      if (expandedAttr === "true") return;
-
       openWithMouseSequence(win, toggle);
-      await sleep(300);
-      return;
+      await sleep(500);
+
+      if (isControlsExpanded(doc)) return;
     }
-    throw new Error("找不到 Controls 折叠面板按钮。");
+    throw new Error("未能展开 Controls 折叠面板。");
   }
 
   function findMenuButton(doc, win) {
@@ -334,7 +343,7 @@
 
   const doc = await waitForWindowReady(w, 180000);
   await sleep(INITIAL_PAGE_SETTLE_MS); // Wait 3s for full page settle before any actions
-  await ensureControlsExpanded(doc, w, 15000);
+  await ensureControlsExpanded(doc, w, 30000);
   await sleep(250);
   await waitForKeyElements(doc, w, 45000);
 
