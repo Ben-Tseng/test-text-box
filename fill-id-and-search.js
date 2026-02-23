@@ -4,7 +4,7 @@
  * 1) 获取一串 ID（可从指定文本框读取，或弹窗输入）
  * 2) 点击下拉按钮（All 右侧三角）
  * 3) 把 ID 填入 Search value 输入框
- * 4) 点击 Search 按钮
+ * 4) 停在待搜索状态（不点击 Search）
  */
 (async () => {
   // 如果你想从页面某个输入框读取 ID，把它改成对应 selector；留空则用 prompt 输入。
@@ -284,17 +284,6 @@
   }
   await sleep(250);
 
-  const panelRoot = findPanelRoot(searchInput, dropdown);
-  const searchBtn = await waitSearchButton(panelRoot, 10000);
-  if (!searchBtn) throw new Error("已填入 ID，但找不到 Search 按钮。");
-
-  // 点击前再次兜底，防止输入值被页面逻辑清空。
-  if ((searchInput.value || "").trim() !== idValue) {
-    await typeIntoAutocomplete(searchInput, idValue);
-    await sleep(120);
-  }
-
-  // 这里不用 mouse sequence，避免触发 mousedown 导致 input blur 后清空值。
-  searchBtn.click();
-  console.log("完成：已填入 ID 并点击 Search。", { idValue });
+  // 不点击 Search，避免当前页面逻辑在提交时清空输入值。
+  console.log("完成：已填入 ID，当前停在待搜索状态（未点击 Search）。", { idValue });
 })();
