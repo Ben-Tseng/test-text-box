@@ -1,0 +1,74 @@
+// 只做一件事：点击 "All" 右侧的下拉菜单（combobox）
+(() => {
+  const norm = (s) => (s || "").toLowerCase().replace(/[\s._-]+/g, "");
+
+  function isVisible(el) {
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    const st = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && st.display !== "none" && st.visibility !== "hidden";
+  }
+
+  function getRoots(doc) {
+    const roots = [doc];
+    for (const f of doc.querySelectorAll("iframe")) {
+      try {
+        if (f.contentDocument) roots.push(...getRoots(f.contentDocument));
+      } catch (_) {}
+    }
+    return roots;
+  }
+
+  function queryAllDeep(root, selector) {
+    const out = [];
+    const walk = (r) => {
+      out.push(...r.querySelectorAll(selector));
+      for (const el of r.querySelectorAll("*")) {
+        if (el.shadowRoot) walk(el.shadowRoot);
+      }
+    };
+    walk(root);
+    return out;
+  }
+
+  let best = null;
+  let bestScore = -Infinity;
+
+  for (const root of getRoots(document)) {
+    const candidates = queryAllDeep(
+      root,
+      '[role="combobox"], [data-automation-id*="search_results_dropdown"], [data-automation-id*="search results dropdown"]'
+    );
+
+    for (const el of candidates) {
+      const txt = norm(
+        [
+          el.getAttribute("data-automation-id"),
+          el.getAttribute("data-automation-context"),
+          el.getAttribute("aria-label"),
+          el.getAttribute("title"),
+          el.textContent,
+        ].filter(Boolean).join(" ")
+      );
+
+      let score = 0;
+      if (txt.includes("searchresultsdropdown")) score += 8;
+      if (txt.includes("mcidprimaryencryptedequals")) score += 5;
+      if (txt.includes("all")) score += 1;
+      if ((el.getAttribute("aria-haspopup") || "").toLowerCase().includes("listbox")) score += 1;
+      if (!isVisible(el)) score -= 100;
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = el;
+      }
+    }
+  }
+
+  if (!best || bestScore < 4) {
+    throw new Error("找不到下拉菜单按钮。");
+  }
+
+  best.click();
+  console.log("已点击下拉菜单按钮。", best);
+})();
