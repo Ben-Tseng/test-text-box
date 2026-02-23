@@ -6,6 +6,11 @@
  */
 (async () => {
   const TARGET_FIELD = "mcid_primary_decrypted equals";
+  const EXACT_MENU_BUTTON_SELECTOR = [
+    'button[data-automation-id="sheet control menu button"][data-automation-context="mcid_primary_decrypted equals"]',
+    'button[data-automation-id="sheet.control.menu.button"][data-automation-context="mcid_primary_decrypted equals"]',
+    'button[data-automation-id="sheet control menubutton"][data-automation-context="mcid_primary_decrypted equals"]',
+  ].join(", ");
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const norm = (s) => (s || "").toLowerCase().replace(/[\s._-]+/g, "");
@@ -41,6 +46,13 @@
     };
     walk(root);
     return result;
+  }
+
+  function openWithMouseSequence(el) {
+    const events = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"];
+    for (const type of events) {
+      el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+    }
   }
 
   function scoreMenuButton(el) {
@@ -81,6 +93,11 @@
 
   function findBestMenuButton() {
     const roots = collectRoots(document);
+    for (const root of roots) {
+      const exact = root.querySelector(EXACT_MENU_BUTTON_SELECTOR);
+      if (exact && isVisible(exact)) return exact;
+    }
+
     let best = null;
     let bestScore = -Infinity;
     for (const root of roots) {
@@ -150,7 +167,7 @@
     throw new Error("找不到三点菜单按钮。请确认字段名是否为 mcid_primary_decrypted equals，或该按钮是否在跨域 iframe 内。");
   }
 
-  menuButton.click();
+  openWithMouseSequence(menuButton);
 
   // Wait for menu render.
   await sleep(250);
