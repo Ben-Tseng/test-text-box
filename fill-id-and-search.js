@@ -263,8 +263,14 @@
   }
 
   function findSelectAllInPanel(scopeRoot) {
+    const byId = document.getElementById("option-select-all");
+    if (byId && isVisible(byId)) return byId;
+
     if (window.jQuery) {
       const $ = window.jQuery;
+      const $byId = $("#option-select-all");
+      if ($byId.length && isVisible($byId[0])) return $byId[0];
+
       const $hit = $(scopeRoot)
         .find('[role="option"], li, div, span, label')
         .filter((_, el) => /select all results/i.test($(el).text()))
