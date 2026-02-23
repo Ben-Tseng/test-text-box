@@ -9,7 +9,7 @@
 (async () => {
   // 如果你想从页面某个输入框读取 ID，把它改成对应 selector；留空则用 prompt 输入。
   const SOURCE_INPUT_SELECTOR = "";
-  const TARGET_CONTEXT_KEYWORD = "mcid_primary_encrypted equals";
+  const TARGET_CONTEXT_KEYWORD = "mcid_primary_decrypted equals";
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const norm = (s) => (s || "").toLowerCase().replace(/[\s._-]+/g, "");
@@ -78,6 +78,40 @@
       }
     }
     return bestScore >= 4 ? best : null;
+  }
+
+  function pickMenuButton() {
+    const roots = getRoots(document);
+    let best = null;
+    let bestScore = -1e9;
+    for (const root of roots) {
+      const cands = queryAllDeep(
+        root,
+        'button[aria-haspopup="true"], [role="button"][aria-haspopup="true"], [data-automation-id*="menu button"], [data-automation-id*="menubutton"]'
+      );
+      for (const el of cands) {
+        const n = norm(
+          [
+            el.getAttribute("data-automation-id"),
+            el.getAttribute("data-automation-context"),
+            el.getAttribute("aria-label"),
+            el.getAttribute("title"),
+            el.textContent,
+          ].filter(Boolean).join(" ")
+        );
+        let score = 0;
+        if (n.includes("sheetcontrolmenubutton") || n.includes("sheetcontrolmenubutton")) score += 8;
+        if (n.includes(norm(TARGET_CONTEXT_KEYWORD))) score += 6;
+        if (n.includes("options")) score += 2;
+        if (n.includes("mcidprimarydecryptedequals")) score += 4;
+        if (!isVisible(el)) score -= 100;
+        if (score > bestScore) {
+          bestScore = score;
+          best = el;
+        }
+      }
+    }
+    return bestScore >= 5 ? best : null;
   }
 
   function getIdValue() {
@@ -199,6 +233,13 @@
   }
 
   const idValue = getIdValue();
+  const menuButton = pickMenuButton();
+  if (menuButton) {
+    // 先点你提供的三点菜单按钮，展开筛选面板。
+    openDropdownWithMouseSequence(menuButton);
+    await sleep(240);
+  }
+
   const dropdown = pickDropdown();
   if (!dropdown) throw new Error("找不到下拉按钮（All 右侧三角）。");
 
