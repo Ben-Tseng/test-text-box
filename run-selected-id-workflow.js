@@ -76,6 +76,56 @@
     throw new Error("页面已打开，但关键元素未出现（menu/dropdown）。");
   }
 
+  function findControlsToggle(doc, win) {
+    const exact = queryAllDeep(
+      doc,
+      '[data-automation-id="sheet-control-panel-toggle-expand"], #sheet_control_panel_header, [aria-label="Controls"]'
+    ).find((el) => isVisible(win, el));
+    if (exact) return exact;
+
+    const candidates = queryAllDeep(doc, '[role="button"], button, div[tabindex]');
+    return (
+      candidates.find((el) => {
+        if (!isVisible(win, el)) return false;
+        const t = norm(
+          [
+            el.getAttribute("data-automation-id"),
+            el.getAttribute("id"),
+            el.getAttribute("aria-label"),
+            el.textContent,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+        return t.includes("sheetcontrolpaneltoggleexpand") || t.includes("sheetcontrolpanelheader") || t === "controls";
+      }) || null
+    );
+  }
+
+  async function ensureControlsExpanded(doc, win, timeoutMs = 15000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const toggle = findControlsToggle(doc, win);
+      if (!toggle) {
+        await sleep(150);
+        continue;
+      }
+
+      const expandedAttr =
+        (toggle.getAttribute("aria-expanded") ||
+          toggle.closest("[aria-expanded]")?.getAttribute("aria-expanded") ||
+          "")
+          .toLowerCase();
+
+      if (expandedAttr === "true") return;
+
+      openWithMouseSequence(win, toggle);
+      await sleep(300);
+      return;
+    }
+    throw new Error("找不到 Controls 折叠面板按钮。");
+  }
+
   function findMenuButton(doc, win) {
     const exact = queryAllDeep(
       doc,
@@ -271,6 +321,8 @@
 
   const doc = await waitForWindowReady(w, 90000);
   await sleep(INITIAL_PAGE_SETTLE_MS); // Wait 3s for full page settle before any actions
+  await ensureControlsExpanded(doc, w, 15000);
+  await sleep(250);
   await waitForKeyElements(doc, w, 45000);
 
   await runClickReset(doc, w);
