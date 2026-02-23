@@ -397,6 +397,10 @@
         'button[data-automation-id="analysis_visual_dropdown_minimize"]'
       );
       if (byAutomationId && isVisible(byAutomationId)) return byAutomationId;
+      const byAutomationIdWithSpace = document.querySelector(
+        'button[data-automation-id="analysis_visual dropdown_minimize"]'
+      );
+      if (byAutomationIdWithSpace && isVisible(byAutomationIdWithSpace)) return byAutomationIdWithSpace;
 
       const candidates = queryAllDeep(document, 'button, [role="button"]');
       for (const el of candidates) {
@@ -414,6 +418,19 @@
         if (t.includes("analysisvisualdropdownminimize") || t.includes("minimize")) {
           return el;
         }
+      }
+      return null;
+    }
+
+    function findAdditionalMinimizeButton() {
+      const selectors = [
+        'button[data-automation-id="analysis_visual dropdown_minimize"]',
+        'button[title="Minimize"][aria-label*="Related sellers"]',
+        'button[aria-label*="Minimize"][aria-label*="Related sellers"]',
+      ];
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el && isVisible(el)) return el;
       }
       return null;
     }
@@ -498,6 +515,10 @@
     const minimizeBtn = await waitMinimizeButton(10000);
     if (!minimizeBtn) throw new Error("已完成 Select all results，但找不到 Minimize 按钮。");
     minimizeBtn.click();
+    await sleep(200);
+
+    const extraMinimizeBtn = findAdditionalMinimizeButton();
+    if (extraMinimizeBtn) extraMinimizeBtn.click();
   }
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
