@@ -262,6 +262,42 @@
     return null;
   }
 
+  function findMinimizeButton() {
+    const byAutomationId = document.querySelector(
+      'button[data-automation-id="analysis_visual_dropdown_minimize"]'
+    );
+    if (byAutomationId && isVisible(byAutomationId)) return byAutomationId;
+
+    const candidates = queryAllDeep(document, 'button, [role="button"]');
+    for (const el of candidates) {
+      if (!isVisible(el)) continue;
+      const t = norm(
+        [
+          el.getAttribute("data-automation-id"),
+          el.getAttribute("aria-label"),
+          el.getAttribute("title"),
+          el.textContent,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+      if (t.includes("analysisvisualdropdownminimize") || t.includes("minimize")) {
+        return el;
+      }
+    }
+    return null;
+  }
+
+  async function waitMinimizeButton(timeoutMs = 8000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const btn = findMinimizeButton();
+      if (btn) return btn;
+      await sleep(120);
+    }
+    return null;
+  }
+
   function findSelectAllInPanel(scopeRoot) {
     const byId = document.getElementById("option-select-all");
     if (byId && isVisible(byId)) return byId;
@@ -331,5 +367,10 @@
   if (!selectAll) throw new Error("Search 已点击，但找不到 Select all results。");
   selectAll.click();
 
-  console.log("完成：已填入 ID，点击 Search，并勾选 Select all results。", { idValue });
+  await sleep(250);
+  const minimizeBtn = await waitMinimizeButton(10000);
+  if (!minimizeBtn) throw new Error("已完成 Select all results，但找不到 Minimize 按钮。");
+  minimizeBtn.click();
+
+  console.log("完成：已填入 ID，点击 Search，勾选 Select all results，并点击 Minimize。", { idValue });
 })();
