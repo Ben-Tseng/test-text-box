@@ -7,6 +7,7 @@
 (async () => {
   const TARGET_URL =
     "https://eu-west-1.quicksight.aws.amazon.com/sn/account/amazonbi/dashboards/1c33135c-4187-40aa-98a9-26720ea3678f/sheets/1c33135c-4187-40aa-98a9-26720ea3678f_77e89b5c-5e2d-46e4-a095-e8365b0299af";
+  const INITIAL_PAGE_SETTLE_MS = 3000;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const norm = (s) => (s || "").toLowerCase().replace(/[\s._-]+/g, "");
@@ -62,6 +63,17 @@
       await sleep(250);
     }
     throw new Error("等待目标页面加载超时。");
+  }
+
+  async function waitForKeyElements(doc, win, timeoutMs = 45000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const menuBtn = findMenuButton(doc, win);
+      const dropdown = findDropdown(doc, win);
+      if (menuBtn || dropdown) return;
+      await sleep(150);
+    }
+    throw new Error("页面已打开，但关键元素未出现（menu/dropdown）。");
   }
 
   function findMenuButton(doc, win) {
@@ -258,7 +270,8 @@
   if (!w) throw new Error("浏览器阻止了弹窗，请允许弹窗后重试。");
 
   const doc = await waitForWindowReady(w, 90000);
-  await sleep(2500); // QuickSight often needs extra time after document ready
+  await sleep(INITIAL_PAGE_SETTLE_MS); // Wait 3s for full page settle before any actions
+  await waitForKeyElements(doc, w, 45000);
 
   await runClickReset(doc, w);
   await sleep(400);
