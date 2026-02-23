@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///Users/bentseng/Downloads/deepseek_html_20251215_1ad1e4.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>test box</title>
+    <style>
+        /* Reset default styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Set pure white background */
+        body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        /* Main container */
+        .container {
+            width: 96%;
+            max-width: 1200px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Title styles */
+        h1 {
+            font-weight: 300;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #555;
+            letter-spacing: 1px;
+        }
+        
+        /* Text input area */
+        .text-input {
+            width: 100%;
+            min-height: 520px;
+            padding: 25px;
+            font-size: 1.2rem;
+            line-height: normal;
+            border: none;
+            outline: none;
+            background-color: #f9f9f9;
+            color: #333;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.02);
+            transition: background-color 0.3s, box-shadow 0.3s;
+            overflow-y: auto;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .text-input:empty::before {
+            content: attr(data-placeholder);
+            color: #bbb;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            color: #666;
+        }
+
+        .toolbar label {
+            font-size: 0.95rem;
+        }
+
+        .toolbar input[type="range"] {
+            width: 140px;
+        }
+
+        .toolbar button {
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #555;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .toolbar button.active {
+            background: #f0f0f0;
+            border-color: #cfcfcf;
+            color: #333;
+        }
+        
+        /* Focus effect for input area */
+        .text-input:focus {
+            background-color: #f5f5f5;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Bottom info */
+        .info {
+            margin-top: 25px;
+            color: #888;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        /* Character count */
+        .char-count {
+            margin-top: 15px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .text-input {
+                min-height: 420px;
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .text-input {
+                min-height: 320px;
+                padding: 20px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>This is a test box</h1>
+        <div class="toolbar">
+            <label for="fontSizeControl">Font size</label>
+            <input type="range" id="fontSizeControl" min="12" max="48" value="19">
+            <span id="fontSizeValue">19px</span>
+            <button type="button" id="boldBtn"><strong>B</strong></button>
+            <button type="button" id="underlineBtn"><u>U</u></button>
+        </div>
+        <div class="text-input" id="textInput" contenteditable="true" data-placeholder=""></div>
+        <div class="char-count" id="charCount">Character count: 0</div>
+        <div class="info">
+            <p>Used for testing the functionality of the IDV plugin</p>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const fontSizeControl = document.getElementById('fontSizeControl');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const boldBtn = document.getElementById('boldBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
+        let currentFontSize = Number(fontSizeControl.value);
+        let savedRange = null;
+
+        document.execCommand('styleWithCSS', false, true);
+
+        function saveSelection() {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return;
+            const range = selection.getRangeAt(0);
+            if (!textInput.contains(range.commonAncestorContainer)) return;
+            savedRange = range.cloneRange();
+        }
+
+        function restoreSelection() {
+            if (!savedRange) return false;
+            const selection = window.getSelection();
+            if (!selection) return false;
+            selection.removeAllRanges();
+            selection.addRange(savedRange);
+            return true;
+        }
+
+        function applyFontSizeToSelection(px) {
+            const selection = window.getSelection();
+            const hasSelection = selection && selection.rangeCount > 0 && !selection.getRangeAt(0).collapsed;
+            if (!hasSelection) {
+                textInput.style.fontSize = `${px}px`;
+                textInput.style.lineHeight = 'normal';
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            if (!textInput.contains(range.commonAncestorContainer)) return;
+
+            const span = document.createElement('span');
+            span.style.fontSize = `${px}px`;
+
+            try {
+                range.surroundContents(span);
+            } catch (_) {
+                const fragment = range.extractContents();
+                span.appendChild(fragment);
+                range.insertNode(span);
+            }
+
+            const newRange = document.createRange();
+            newRange.selectNodeContents(span);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            savedRange = newRange.cloneRange();
+        }
+
+        function getSelectionFontSize() {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return currentFontSize;
+            let node = selection.anchorNode;
+            if (!node) return currentFontSize;
+            if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+            if (!node || !textInput.contains(node)) return currentFontSize;
+            const size = parseFloat(window.getComputedStyle(node).fontSize);
+            return Number.isFinite(size) ? Math.round(size) : currentFontSize;
+        }
+
+        function updateToolbarState() {
+            const isBold = document.queryCommandState('bold');
+            const isUnderline = document.queryCommandState('underline');
+            boldBtn.classList.toggle('active', isBold);
+            underlineBtn.classList.toggle('active', isUnderline);
+            const selectionSize = getSelectionFontSize();
+            currentFontSize = selectionSize;
+            fontSizeControl.value = String(selectionSize);
+            fontSizeValue.textContent = `${selectionSize}px`;
+        }
+
+        // Initialize empty content every load
+        window.addEventListener('DOMContentLoaded', () => {
+            textInput.innerHTML = '';
+            updateCharCount();
+            textInput.style.fontSize = `${currentFontSize}px`;
+            fontSizeControl.value = String(currentFontSize);
+            fontSizeValue.textContent = `${currentFontSize}px`;
+            updateToolbarState();
+
+            // Auto-focus the text input
+            textInput.focus();
+        });
+        
+        // Update character count
+        function updateCharCount() {
+            const count = textInput.innerText.length;
+            charCount.textContent = `Character count: ${count}`;
+        }
+        
+        // Update count in real-time
+        textInput.addEventListener('input', () => {
+            updateCharCount();
+            updateToolbarState();
+        });
+
+        fontSizeControl.addEventListener('input', () => {
+            currentFontSize = Number(fontSizeControl.value);
+            fontSizeValue.textContent = `${currentFontSize}px`;
+            restoreSelection();
+            applyFontSizeToSelection(currentFontSize);
+            textInput.focus();
+            saveSelection();
+            const isBold = document.queryCommandState('bold');
+            const isUnderline = document.queryCommandState('underline');
+            boldBtn.classList.toggle('active', isBold);
+            underlineBtn.classList.toggle('active', isUnderline);
+        });
+
+        boldBtn.addEventListener('click', () => {
+            restoreSelection();
+            document.execCommand('bold');
+            textInput.focus();
+            saveSelection();
+            updateToolbarState();
+        });
+
+        underlineBtn.addEventListener('click', () => {
+            restoreSelection();
+            document.execCommand('underline');
+            textInput.focus();
+            saveSelection();
+            updateToolbarState();
+        });
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + S Save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                alert('Content auto-saved!');
+            }
+            
+            // Ctrl/Cmd + A Select all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                // Allow default behavior
+            }
+            
+            // ESC Clear input box
+            if (e.key === 'Escape') {
+                if (confirm('Are you sure you want to clear all text?')) {
+                    textInput.innerHTML = '';
+                    updateCharCount();
+                    updateToolbarState();
+                    textInput.focus();
+                }
+            }
+        });
+
+        textInput.addEventListener('mouseup', () => {
+            saveSelection();
+            updateToolbarState();
+        });
+        textInput.addEventListener('keyup', () => {
+            saveSelection();
+            updateToolbarState();
+        });
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return;
+            const range = selection.getRangeAt(0);
+            if (!textInput.contains(range.commonAncestorContainer)) return;
+            saveSelection();
+            updateToolbarState();
+        });
+        
+        // Initial update of character count
+        updateCharCount();
+    </script>
+
+</body></html>
