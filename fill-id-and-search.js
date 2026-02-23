@@ -207,9 +207,7 @@
       await sleep(25);
     }
 
-    // 通知控件输入结束
-    input.dispatchEvent(new Event("blur", { bubbles: true }));
-    input.focus();
+    // 不触发 blur/ArrowDown，避免组件将当前输入判定为未确认并清空。
   }
 
   function findPanelRoot(searchInput, dropdown) {
@@ -273,6 +271,14 @@
 
   searchInput.focus();
   await typeIntoAutocomplete(searchInput, idValue);
+  if (!searchInput.isConnected || !isVisible(searchInput)) {
+    // 输入过程中面板被关闭时，重新展开再输入一次。
+    openDropdownWithMouseSequence(dropdown);
+    await sleep(220);
+    searchInput = await waitSearchInput(dropdown, 3000);
+    if (!searchInput) throw new Error("输入后面板关闭，且无法重新定位 Search value 输入框。");
+    await typeIntoAutocomplete(searchInput, idValue);
+  }
   if ((searchInput.value || "").trim() !== idValue) {
     throw new Error(`ID 未成功写入搜索框。当前值: "${searchInput.value || ""}"`);
   }
@@ -288,6 +294,7 @@
     await sleep(120);
   }
 
-  openDropdownWithMouseSequence(searchBtn);
+  // 这里不用 mouse sequence，避免触发 mousedown 导致 input blur 后清空值。
+  searchBtn.click();
   console.log("完成：已填入 ID 并点击 Search。", { idValue });
 })();
