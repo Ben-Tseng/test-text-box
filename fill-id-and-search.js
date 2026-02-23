@@ -46,6 +46,19 @@
 
   function pickDropdown() {
     const roots = getRoots(document);
+    const exactSelectors = [
+      '[role="combobox"][data-automation-id="sheet_control_search_results_dropdown"][data-automation-context="mcid primary_decrypted equals"]',
+      '[role="combobox"][data-automation-id="sheet control search results dropdown"][data-automation-context="mcid primary decrypted equals"]',
+      '[role="combobox"][data-automation-id="sheet_control_search_results_dropdown"]',
+      '[role="combobox"][data-automation-id="sheet control search results dropdown"]',
+    ];
+    for (const root of roots) {
+      for (const selector of exactSelectors) {
+        const hit = queryAllDeep(root, selector).find((el) => isVisible(el));
+        if (hit) return hit;
+      }
+    }
+
     let best = null;
     let bestScore = -1e9;
     for (const root of roots) {
@@ -67,7 +80,7 @@
         let score = 0;
         if (n.includes("searchresultsdropdown")) score += 8;
         if (n.includes(norm(TARGET_CONTEXT_KEYWORD))) score += 5;
-        if (n.includes("mcidprimaryencryptedequals")) score += 5;
+        if (n.includes("mcidprimarydecryptedequals")) score += 5;
         if (n.includes("all")) score += 1;
         if ((el.getAttribute("aria-haspopup") || "").toLowerCase().includes("listbox")) score += 1;
         if (!isVisible(el)) score -= 100;
