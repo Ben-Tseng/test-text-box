@@ -93,6 +93,13 @@
     return v.trim();
   }
 
+  function openDropdownWithMouseSequence(el) {
+    const events = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"];
+    for (const type of events) {
+      el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+    }
+  }
+
   async function waitSearchInput(timeoutMs = 8000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
@@ -145,10 +152,17 @@
   const dropdown = pickDropdown();
   if (!dropdown) throw new Error("找不到下拉按钮（All 右侧三角）。");
 
-  dropdown.click();
-  await sleep(250);
+  // 固定用你验证有效的方式2：mouse sequence。
+  openDropdownWithMouseSequence(dropdown);
+  await sleep(220);
 
-  const searchInput = await waitSearchInput(10000);
+  let searchInput = await waitSearchInput(1200);
+  if (!searchInput) {
+    // 兜底再触发一次，处理偶发首次未展开。
+    openDropdownWithMouseSequence(dropdown);
+    await sleep(220);
+    searchInput = await waitSearchInput(10000);
+  }
   if (!searchInput) throw new Error("下拉已点击，但找不到 Search value 输入框。");
 
   searchInput.focus();
