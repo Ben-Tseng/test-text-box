@@ -4,7 +4,8 @@
  * 1) 获取一串 ID（可从指定文本框读取，或弹窗输入）
  * 2) 点击下拉按钮（All 右侧三角）
  * 3) 把 ID 填入 Search value 输入框
- * 4) 停在待搜索状态（不点击 Search）
+ * 4) 点击 Search
+ * 5) 等2秒后点击 Select all results
  */
 (async () => {
   // 如果你想从页面某个输入框读取 ID，把它改成对应 selector；留空则用 prompt 输入。
@@ -224,30 +225,59 @@
     return document;
   }
 
+  function findSearchButtonInPanel(scopeRoot) {
+    if (window.jQuery) {
+      const $ = window.jQuery;
+      const $btn = $(scopeRoot)
+        .find('button[data-automation-id*="search"], button')
+        .filter((_, el) => norm($(el).text()) === "search" || norm($(el).text()).endsWith("search"))
+        .first();
+      if ($btn.length && isVisible($btn[0])) return $btn[0];
+    }
+
+    const btns = queryAllDeep(scopeRoot, 'button, [role="button"]');
+    return btns.find((el) => {
+      if (!isVisible(el)) return false;
+      const t = norm(
+        [
+          el.getAttribute("data-automation-id"),
+          el.getAttribute("aria-label"),
+          el.getAttribute("title"),
+          el.textContent,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+      return t.includes("paginatedsearchcomponentsearch") || t === "search" || t.endsWith("search");
+    }) || null;
+  }
+
   async function waitSearchButton(scopeRoot, timeoutMs = 8000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
-      const btns = queryAllDeep(scopeRoot, 'button, [role="button"]');
-      const btn = btns.find((el) => {
-        if (!isVisible(el)) return false;
-        const t = norm(
-          [
-            el.getAttribute("data-automation-id"),
-            el.getAttribute("aria-label"),
-            el.getAttribute("title"),
-            el.textContent,
-          ]
-            .filter(Boolean)
-            .join(" ")
-        );
-        return (
-          t.includes("paginatedsearchcomponentsearch") ||
-          t === "search" ||
-          t.endsWith("search")
-        );
-      });
+      const btn = findSearchButtonInPanel(scopeRoot);
       if (btn) return btn;
       await sleep(120);
+    }
+    return null;
+  }
+
+  function findSelectAllInPanel(scopeRoot) {
+    if (window.jQuery) {
+      const $ = window.jQuery;
+      const $hit = $(scopeRoot)
+        .find('[role="option"], li, div, span, label')
+        .filter((_, el) => /select all results/i.test($(el).text()))
+        .first();
+      if ($hit.length) return $hit[0].closest('[role="option"], li, div, label') || $hit[0];
+    }
+
+    const candidates = queryAllDeep(scopeRoot, '[role="option"], li, div, span, label');
+    for (const el of candidates) {
+      if (!isVisible(el)) continue;
+      if (/select all results/i.test((el.textContent || "").trim())) {
+        return el.closest('[role="option"], li, div, label') || el;
+      }
     }
     return null;
   }
@@ -284,6 +314,16 @@
   }
   await sleep(250);
 
-  // 不点击 Search，避免当前页面逻辑在提交时清空输入值。
-  console.log("完成：已填入 ID，当前停在待搜索状态（未点击 Search）。", { idValue });
+  const panelRoot = findPanelRoot(searchInput, dropdown);
+  const searchBtn = await waitSearchButton(panelRoot, 10000);
+  if (!searchBtn) throw new Error("已填入 ID，但找不到 Search 按钮。");
+
+  searchBtn.click();
+  await sleep(2000);
+
+  const selectAll = findSelectAllInPanel(panelRoot);
+  if (!selectAll) throw new Error("Search 已点击，但找不到 Select all results。");
+  selectAll.click();
+
+  console.log("完成：已填入 ID，点击 Search，并勾选 Select all results。", { idValue });
 })();
