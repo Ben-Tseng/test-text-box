@@ -149,49 +149,11 @@
   }
 
   function findDropdown() {
-    if (!isControlsExpanded()) {
-      const toggle = findControlsToggle();
-      if (toggle) openWithMouseSequence(toggle);
-    }
-
-    const targetNorm = norm(TARGET_FIELD);
-    const altTargetNorm = norm("mcid_primary_decerpted equals");
-    const containers = queryAllDeep(document, "[data-automation-context], [aria-label], [title], div, section");
-    let targetContainer = null;
-    for (const el of containers) {
-      if (!isVisible(el)) continue;
-      const text = norm(
-        [
-          el.getAttribute("data-automation-context"),
-          el.getAttribute("aria-label"),
-          el.getAttribute("title"),
-          (el.textContent || "").slice(0, 120),
-        ]
-          .filter(Boolean)
-          .join(" ")
-      );
-      if (text.includes(targetNorm) || text.includes(altTargetNorm)) {
-        targetContainer = el;
-        break;
-      }
-    }
-
-    if (targetContainer) {
-      const scoped = queryAllDeep(
-        targetContainer,
-        '[role="combobox"], [data-automation-id*="search_results_dropdown"], [data-automation-id*="search results dropdown"]'
-      ).find((el) => isVisible(el));
-      if (scoped) return scoped;
-    }
-
     const exactSelectors = [
       '[role="combobox"][data-automation-id="sheet_control_search_results_dropdown"][data-automation-context="mcid primary_decrypted equals"]',
       '[role="combobox"][data-automation-id="sheet control search results dropdown"][data-automation-context="mcid primary decrypted equals"]',
-      '[role="combobox"][data-automation-id="sheet.control.search.results.dropdown"][data-automation-context*="mcid"]',
       '[role="combobox"][data-automation-id="sheet_control_search_results_dropdown"]',
       '[role="combobox"][data-automation-id="sheet control search results dropdown"]',
-      '[role="combobox"][data-automation-id*="search_results_dropdown"]',
-      '[role="combobox"][data-automation-id*="search results dropdown"]',
     ];
     for (const root of getRoots(document)) {
       for (const selector of exactSelectors) {
@@ -199,50 +161,7 @@
         if (hit) return hit;
       }
     }
-
-    // Fallback: visible combobox whose displayed text is "All".
-    const allComboboxes = queryAllDeep(document, '[role="combobox"]').filter((el) => {
-      if (!isVisible(el)) return false;
-      const txt = (el.textContent || "").trim().toLowerCase();
-      return txt === "all" || txt.startsWith("all");
-    });
-    if (allComboboxes.length) return allComboboxes[0];
-
     return null;
-  }
-
-  function findControlsToggle() {
-    const selectors = [
-      '[data-automation-id="sheet-control-panel-toggle-expand"]',
-      '#sheet_control_panel_header',
-      '[aria-label="Controls"]',
-    ];
-    for (const sel of selectors) {
-      const hit = queryAllDeep(document, sel).find((el) => isVisible(el));
-      if (hit) return hit;
-    }
-    return null;
-  }
-
-  function isControlsExpanded() {
-    const expanded = document.querySelector(
-      '#sheet_control_panel_header[aria-expanded="true"], [data-automation-id="sheet-control-panel-toggle-expand"][aria-expanded="true"]'
-    );
-    if (expanded) return true;
-    return Boolean(
-      document.querySelector('[data-automation-id*="search_results_dropdown"]') ||
-        document.querySelector('[data-automation-id*="search results dropdown"]')
-    );
-  }
-
-  async function ensureControlsExpanded(timeoutMs = 30000) {
-    const end = Date.now() + timeoutMs;
-    while (Date.now() < end) {
-      if (isControlsExpanded()) return;
-      const toggle = findControlsToggle();
-      if (toggle) openWithMouseSequence(toggle);
-      await sleep(400);
-    }
   }
 
   async function waitSearchInput(dropdown, timeoutMs = 10000) {
@@ -332,7 +251,6 @@
   }
 
   async function fillAndSearch() {
-    await ensureControlsExpanded(30000);
     const idValue = await getIdValue();
     const dropdown = findDropdown();
     if (!dropdown) throw new Error("找不到下拉按钮（All 右侧三角）。");
@@ -366,7 +284,7 @@
   }
 
   await clickReset();
-  await sleep(300);
+  await sleep(1000);
   await fillAndSearch();
   console.log("完成：已执行 click-reset + fill-id-and-search。");
 })();
