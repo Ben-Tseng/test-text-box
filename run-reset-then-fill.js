@@ -154,6 +154,36 @@
       if (toggle) openWithMouseSequence(toggle);
     }
 
+    const targetNorm = norm(TARGET_FIELD);
+    const altTargetNorm = norm("mcid_primary_decerpted equals");
+    const containers = queryAllDeep(document, "[data-automation-context], [aria-label], [title], div, section");
+    let targetContainer = null;
+    for (const el of containers) {
+      if (!isVisible(el)) continue;
+      const text = norm(
+        [
+          el.getAttribute("data-automation-context"),
+          el.getAttribute("aria-label"),
+          el.getAttribute("title"),
+          (el.textContent || "").slice(0, 120),
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+      if (text.includes(targetNorm) || text.includes(altTargetNorm)) {
+        targetContainer = el;
+        break;
+      }
+    }
+
+    if (targetContainer) {
+      const scoped = queryAllDeep(
+        targetContainer,
+        '[role="combobox"], [data-automation-id*="search_results_dropdown"], [data-automation-id*="search results dropdown"]'
+      ).find((el) => isVisible(el));
+      if (scoped) return scoped;
+    }
+
     const exactSelectors = [
       '[role="combobox"][data-automation-id="sheet_control_search_results_dropdown"][data-automation-context="mcid primary_decrypted equals"]',
       '[role="combobox"][data-automation-id="sheet control search results dropdown"][data-automation-context="mcid primary decrypted equals"]',
