@@ -49,18 +49,31 @@
     }
   }
 
-  async function waitForWindowReady(win, timeoutMs = 90000) {
+  async function waitForWindowReady(win, timeoutMs = 180000) {
     const start = Date.now();
+    let sawSecurityError = false;
     while (Date.now() - start < timeoutMs) {
       try {
         if (win.closed) throw new Error("目标窗口已关闭。");
         if (win.document?.readyState === "complete" || win.document?.readyState === "interactive") {
           return win.document;
         }
-      } catch (_) {
-        // Still navigating or cross-origin transition; keep waiting.
+      } catch (err) {
+        // Cross-origin access is not scriptable from this tab.
+        if (err && (err.name === "SecurityError" || /cross-origin|permission denied/i.test(String(err)))) {
+          sawSecurityError = true;
+          // Give it a short grace period for navigation, then fail fast with explicit reason.
+          if (Date.now() - start > 5000) {
+            throw new Error(
+              "当前标签页无法访问新打开的 QuickSight 页面（跨域限制）。请直接在 QuickSight 页面控制台运行脚本。"
+            );
+          }
+        }
       }
       await sleep(250);
+    }
+    if (sawSecurityError) {
+      throw new Error("跨域限制导致无法控制新标签页。请在 QuickSight 页面控制台运行脚本。");
     }
     throw new Error("等待目标页面加载超时。");
   }
@@ -319,7 +332,7 @@
   const w = window.open(TARGET_URL, "_blank");
   if (!w) throw new Error("浏览器阻止了弹窗，请允许弹窗后重试。");
 
-  const doc = await waitForWindowReady(w, 90000);
+  const doc = await waitForWindowReady(w, 180000);
   await sleep(INITIAL_PAGE_SETTLE_MS); // Wait 3s for full page settle before any actions
   await ensureControlsExpanded(doc, w, 15000);
   await sleep(250);
