@@ -1,0 +1,1 @@
+javascript:(()=>{const s=localStorage.getItem('rrf_v1');if(!s){alert('Workflow not installed. Run installer bookmarklet once.');return;}(0,eval)(s);})();
