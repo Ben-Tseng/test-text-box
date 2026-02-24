@@ -523,7 +523,7 @@
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await runClickReset();
-  await sleep(1000);
+  await sleep(2000);
   await runFillIdAndSearch();
   console.log("完成：已执行 click-reset + fill-id-and-search。");
 })();
