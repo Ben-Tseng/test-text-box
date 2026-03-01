@@ -1,1 +1,85 @@
-setTimeout(() => document.querySelector('button.primary[type="button"]')?.click(), 5000);
+(() => {
+  // 先卸载旧脚本（如果有）
+  if (window.__delaySendOff) window.__delaySendOff();
+
+  const DELAY_MS = 5000; // 改这里：延迟毫秒
+  let pending = false;
+  let bypass = false;
+
+  const norm = (s) => (s || "").replace(/\s+/g, " ").trim().toLowerCase();
+
+  function getSendTargetFromNode(node) {
+    if (!node || !node.closest) return null;
+
+    // 1) 优先匹配 kat-button
+    const kat = node.closest('kat-button[label], kat-button.transition-button');
+    if (kat) {
+      const label = norm(kat.getAttribute("label") || kat.textContent);
+      if (label === "send") {
+        // 真正可点击元素可能是内部 button，也可能是 kat-button 本身
+        return kat.querySelector('button[type="button"], button.primary, button') || kat;
+      }
+    }
+
+    // 2) 回退普通 button
+    const btn = node.closest('button[type="button"], button.primary');
+    if (btn && norm(btn.textContent) === "send") return btn;
+
+    return null;
+  }
+
+  function findCurrentSendTarget() {
+    const kat = Array.from(document.querySelectorAll("kat-button[label], kat-button.transition-button"))
+      .find((el) => norm(el.getAttribute("label") || el.textContent) === "send");
+    if (kat) return kat.querySelector('button[type="button"], button.primary, button') || kat;
+
+    return Array.from(document.querySelectorAll('button[type="button"], button.primary'))
+      .find((b) => norm(b.textContent) === "send") || null;
+  }
+
+  function blockAndDelay(e) {
+    if (bypass) return;
+
+    // 键盘只拦 Enter / Space
+    if (e.type === "keydown" && !["Enter", " "].includes(e.key)) return;
+
+    const target = getSendTargetFromNode(e.target);
+    if (!target) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+    if (pending) return;
+    pending = true;
+
+    console.log(`[DelaySend] 已拦截 Send，${DELAY_MS}ms 后触发`);
+
+    setTimeout(() => {
+      pending = false;
+      const t = findCurrentSendTarget();
+      if (!t) {
+        console.warn("[DelaySend] 未找到 Send 按钮（可能 DOM 刷新了）");
+        return;
+      }
+
+      bypass = true;
+      try {
+        t.click();
+      } finally {
+        setTimeout(() => { bypass = false; }, 0);
+      }
+      console.log("[DelaySend] 已触发 Send");
+    }, DELAY_MS);
+  }
+
+  const events = ["pointerdown", "mousedown", "mouseup", "click", "keydown"];
+  events.forEach((ev) => document.addEventListener(ev, blockAndDelay, true));
+
+  window.__delaySendOff = () => {
+    events.forEach((ev) => document.removeEventListener(ev, blockAndDelay, true));
+    console.log("[DelaySend] 已卸载");
+  };
+
+  console.log("[DelaySend] 已启用。执行 __delaySendOff() 可关闭。");
+})();
