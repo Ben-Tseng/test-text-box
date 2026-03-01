@@ -1,0 +1,1 @@
+setTimeout(() => document.querySelector('button.primary[type="button"]')?.click(), 5000);
