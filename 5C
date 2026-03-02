@@ -1,0 +1,72 @@
+/**
+ * 按顺序点击 5 个元素（可直接在浏览器控制台粘贴执行，或通过注入脚本执行）
+ * 顺序来自你提供的截图：
+ * 1) person 折叠按钮
+ * 2) tabs-7 链接（Product Accounts/...）
+ * 3) productAccount 折叠按钮
+ * 4) tabs-5 链接（Take Actions）
+ * 5) 提交按钮 #productaccount-Operations-Form-Submission-Button
+ */
+
+(async () => {
+  const STEP_TIMEOUT = 15000;
+  const GAP_MS = 400;
+
+  const steps = [
+    {
+      name: 'Step 1: person accordion button',
+      selector: 'button.accordion-local.person'
+    },
+    {
+      name: 'Step 2: tabs-7',
+      selector: 'a.ui-tabs-anchor[href="#tabs-7"]'
+    },
+    {
+      name: 'Step 3: productAccount accordion button',
+      selector: 'button.accordion-local.productAccount'
+    },
+    {
+      name: 'Step 4: tabs-5 (Take Actions)',
+      selector: 'a.ui-tabs-anchor[href="#tabs-5"]'
+    },
+    {
+      name: 'Step 5: submit button',
+      selector: '#productaccount-Operations-Form-Submission-Button'
+    }
+  ];
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  function isVisible(el) {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      style.visibility !== 'hidden' &&
+      style.display !== 'none'
+    );
+  }
+
+  async function waitForElement(selector, timeout = STEP_TIMEOUT) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const el = document.querySelector(selector);
+      if (el && isVisible(el)) return el;
+      await sleep(120);
+    }
+    throw new Error(`等待超时，未找到可见元素: ${selector}`);
+  }
+
+  for (const step of steps) {
+    const el = await waitForElement(step.selector);
+    el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
+    await sleep(100);
+    el.click();
+    console.log(`[OK] ${step.name} -> ${step.selector}`);
+    await sleep(GAP_MS);
+  }
+
+  console.log('5个元素已按顺序点击完成');
+})();
