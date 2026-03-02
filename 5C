@@ -28,7 +28,7 @@
     },
     {
       name: 'Step 4: tabs-5 (Take Actions)',
-      selector: 'a.ui-tabs-anchor[href="#tabs-5"]'
+      selector: '#productAccountInformationTab li[aria-controls="tabs-5"] > a.tab-heading.ui-tabs-anchor[href="#tabs-5"]'
     },
     {
       name: 'Step 5: submit button',
