@@ -19,11 +19,12 @@
     },
     {
       name: 'Step 2: tabs-7',
-      selector: 'a.ui-tabs-anchor[href="#tabs-7"]'
+      selector: 'a.ui-tabs-anchor[href="#tabs-7"]',
+      afterClickWaitMs: 6000
     },
     {
       name: 'Step 3: productAccount accordion button',
-      selector: 'button.accordion-local.productAccount'
+      selector: '#tabs-7 #result button.accordion-local.productAccount'
     },
     {
       name: 'Step 4: tabs-5 (Take Actions)',
@@ -65,6 +66,9 @@
     await sleep(100);
     el.click();
     console.log(`[OK] ${step.name} -> ${step.selector}`);
+    if (step.afterClickWaitMs) {
+      await sleep(step.afterClickWaitMs);
+    }
     await sleep(GAP_MS);
   }
 
