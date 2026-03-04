@@ -16,3 +16,7 @@ el.dispatchEvent(new Event("blur", { bubbles: true }));
 [...document.querySelectorAll("button")]
 .find(b => b.innerText.includes("Generate Report"))
 .click();
+
+[...document.querySelectorAll("span")]
+.find(el => el.textContent.includes("BusinessDetails"))
+.click();
