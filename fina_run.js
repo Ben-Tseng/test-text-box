@@ -117,11 +117,11 @@
   }
 
   async function openViewAllAndReadTxnId() {
-    const viewAll = await waitFor(() => btnByText("view all"), 30000);
+    const viewAll = await waitFor(() => btnByText("view all"), 3000);
     if (!viewAll) return null;
     click(viewAll);
 
-    const txnId = await waitFor(() => getTxnId(), 30000);
+    const txnId = await waitFor(() => getTxnId(), 3000);
     return txnId || null;
   }
 
@@ -134,10 +134,10 @@
   }
 
   // Get Started
-  click(await waitFor(() => document.querySelector('[data-testid="get-started-button"]'), 3000));
+  click(await waitFor(() => document.querySelector('[data-testid="get-started-button"]'), 6000));
 
   // BRN 输入框出现再填
-  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 4000);
+  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 6000);
   setBRN(BRN_VALUE);
 
   // Review
