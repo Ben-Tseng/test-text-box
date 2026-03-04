@@ -137,7 +137,7 @@
   click(await waitFor(() => document.querySelector('[data-testid="get-started-button"]'), 6000));
 
   // BRN 输入框出现再填
-  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 6000);
+  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 10000);
   setBRN(BRN_VALUE);
 
   // Review
