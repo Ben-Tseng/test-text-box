@@ -22,3 +22,25 @@ el.dispatchEvent(new Event("blur", { bubbles: true }));
 .click();
 
 document.querySelector('[data-testid="additional-data-appended-div"]').innerText
+
+
+
+
+
+
+const abnormal = [...document.querySelectorAll("span.categoryName")]
+.find(e => e.textContent.includes("Abnormal"));
+
+if(abnormal){
+    abnormal.click();
+}
+
+setTimeout(()=>{
+
+const rows = document.querySelectorAll(
+    '[data-testid="additional-data-appended-div"] .StDataLine-sc-148d2ws-0'
+);
+
+console.log(rows.length > 0 ? "有内容" : "无内容");
+
+},1500);
