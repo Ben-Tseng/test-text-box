@@ -164,9 +164,9 @@ console.log(rows.length > 0 ? "有内容" : "无内容");
 
 
 document.querySelector('a[href="/verification"]').click()
-
+// 等待2.5秒
 document.querySelector('[data-testid="get-started-button"]').click()
-
+// 等待0.5s
 
 const el = document.getElementById("BusinessRegistrationNumber");
 const value = "12345678";
@@ -185,6 +185,7 @@ el.dispatchEvent(new Event("blur", { bubbles: true }));
 document.querySelector('[data-testid="review-selection-button-available"]').click()
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("Generate Report")) .click()
+//等8秒
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("Additional data")) .click()
 
@@ -194,6 +195,25 @@ document.querySelector('[data-testid="review-selection-button-available"]').clic
 
 [...document.querySelectorAll("span")] .find(el=>el.textContent.includes("Abnormal")) .click();
 
-[...document.querySelectorAll("span")] .find(el=>el.textContent.includes("Abnormal")) .click();
+[...document.querySelectorAll("span")] .find(el=>el.textContent.includes("Key Info")) .click();
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("View all")) .click()
+
+
+
+
+
+const title = [...document.querySelectorAll("span")]
+  .find(el => el.textContent.trim() === "Transaction record ID:");
+
+const value = title.nextElementSibling.textContent.trim();
+
+const text = `Transaction record ID: ${value}`;
+
+navigator.clipboard.writeText(text);
+
+console.log("已复制:", text);
+
+
+// 一行高手版
+navigator.clipboard.writeText([...document.querySelectorAll("span")].find(e=>e.textContent.trim()=="Transaction record ID:").nextElementSibling.textContent.trim())
