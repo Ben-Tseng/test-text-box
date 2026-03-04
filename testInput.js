@@ -20,3 +20,5 @@ el.dispatchEvent(new Event("blur", { bubbles: true }));
 [...document.querySelectorAll("span")]
 .find(el => el.textContent.includes("BusinessDetails"))
 .click();
+
+document.querySelector('[data-testid="additional-data-appended-div"]').innerText
