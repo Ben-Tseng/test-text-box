@@ -233,3 +233,10 @@ document.querySelector(".copyTransactionRecordId")?.click()
 
 //5
 document.querySelector(".copyTransactionRecordId")?.click()
+
+
+function getTxnId() {
+    const title = [...document.querySelectorAll("span")]
+      .find(el => el.textContent.trim() === "Transaction record ID:");
+    return title?.nextElementSibling?.textContent?.trim() || null;
+  }
