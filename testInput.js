@@ -183,10 +183,10 @@ el.dispatchEvent(new Event("change", { bubbles: true }));
 el.dispatchEvent(new Event("blur", { bubbles: true }));
 
 document.querySelector('[data-testid="review-selection-button-available"]').click()
-// 0.2s
+// 中间等待0.2s
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("Generate Report")) .click()
-//等8秒
+//中间等8秒
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("Additional data")) .click()
 
