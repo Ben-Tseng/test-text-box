@@ -134,29 +134,29 @@
   }
 
   // Get Started
-  click(await waitFor(() => document.querySelector('[data-testid="get-started-button"]'), 40000));
+  click(await waitFor(() => document.querySelector('[data-testid="get-started-button"]'), 3000));
 
   // BRN 输入框出现再填
-  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 40000);
+  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 4000);
   setBRN(BRN_VALUE);
 
   // Review
-  click(await waitFor(() => btnByText("review"), 40000));
+  click(await waitFor(() => btnByText("review"), 4000));
 
   // Generate Report
-  click(await waitFor(() => btnByText("generate report"), 60000));
+  click(await waitFor(() => btnByText("generate report"), 8000));
 
   // 等报告生成（这里仍然给一个保底等待；如果你想更稳可改成等某个元素出现）
   await sleep(8000);
 
   // Additional data
-  click(await waitFor(() => btnByText("additional data") || spanByText("additional data"), 60000));
+  click(await waitFor(() => btnByText("additional data") || spanByText("additional data"), 1000));
 
   // BusinessDetails
-  click(await waitFor(() => spanByText("businessdetails") || categoryByText("businessdetails"), 60000));
+  click(await waitFor(() => spanByText("businessdetails") || categoryByText("businessdetails"), 1000));
 
   // 右侧容器
-  const container = await waitFor(() => document.querySelector('[data-testid="additional-data-appended-div"]'), 60000);
+  const container = await waitFor(() => document.querySelector('[data-testid="additional-data-appended-div"]'), 1000);
   if (!container) {
     console.log("❌ 未找到 additional-data-appended-div");
     return;
