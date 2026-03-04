@@ -1,148 +1,209 @@
-javascript:(async()=>{
+(async () => {
+  const BRN_VALUE = "12345678"; // ← 改这里
 
-const BRN_VALUE="12345678";
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  async function waitFor(fn, timeout = 30000, interval = 200) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      try {
+        const v = fn();
+        if (v) return v;
+      } catch {}
+      await sleep(interval);
+    }
+    return null;
+  }
 
-async function waitFor(fn,t=30000){
- const s=Date.now();
- while(Date.now()-s<t){
-  try{
-   const v=fn();
-   if(v) return v;
-  }catch(e){}
-  await sleep(200);
- }
- return null;
-}
+  function click(el) {
+    if (!el) return false;
+    try { el.scrollIntoView({ block: "center" }); } catch {}
+    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    el.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return true;
+  }
 
-function click(el){
- if(!el) return false;
- try{el.scrollIntoView({block:"center"});}catch(e){}
- el.dispatchEvent(new MouseEvent("mousedown",{bubbles:true}));
- el.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}));
- el.dispatchEvent(new MouseEvent("click",{bubbles:true}));
- return true;
-}
+  function btnByText(text) {
+    const t = text.toLowerCase();
+    return [...document.querySelectorAll("button")]
+      .find(b => ((b.innerText || "").trim().toLowerCase()).includes(t));
+  }
 
-function btn(text){
- const t=text.toLowerCase();
- return [...document.querySelectorAll("button")]
- .find(b=>((b.innerText||"").toLowerCase()).includes(t));
-}
+  function spanByText(text) {
+    const t = text.toLowerCase();
+    return [...document.querySelectorAll("span")]
+      .find(s => ((s.textContent || "").trim().toLowerCase()).includes(t));
+  }
 
-function span(text){
- const t=text.toLowerCase();
- return [...document.querySelectorAll("span")]
- .find(s=>((s.textContent||"").toLowerCase()).includes(t));
-}
+  function categoryByText(text) {
+    const t = text.toLowerCase();
+    return [...document.querySelectorAll("span.categoryName")]
+      .find(s => ((s.textContent || "").trim().toLowerCase()).includes(t));
+  }
 
-function category(text){
- const t=text.toLowerCase();
- return [...document.querySelectorAll("span.categoryName")]
- .find(s=>((s.textContent||"").toLowerCase()).includes(t));
-}
+  function setBRN(value) {
+    const el = document.querySelector('input[name="BusinessRegistrationNumber"]');
+    if (!el) return false;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    if (!setter) return false;
 
-function setInput(value){
- const el=document.querySelector('input[name="BusinessRegistrationNumber"]');
- if(!el) return false;
+    setter.call(el, value);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    el.dispatchEvent(new Event("blur", { bubbles: true }));
+    return true;
+  }
 
- const setter=Object.getOwnPropertyDescriptor(
- HTMLInputElement.prototype,"value").set;
+  async function waitContainerStable(container, maxMs = 9000) {
+    const start = Date.now();
+    let last = "";
+    let stable = 0;
+    while (Date.now() - start < maxMs) {
+      const cur = (container.innerText || "").trim();
+      if (cur && cur === last) stable++;
+      else stable = 0;
+      last = cur;
+      if (stable >= 2) break;
+      await sleep(200);
+    }
+  }
 
- setter.call(el,value);
+  // —— 抽取/清洗“真实内容” —— //
+  function getCleanContent(container) {
+    // 复制一份 DOM，删掉标题/复制按钮/纯装饰
+    const clone = container.cloneNode(true);
+    clone.querySelectorAll("b.dataTitle, button.copyTitle, button.copyTransactionRecordId").forEach(n => n.remove());
 
- el.dispatchEvent(new Event("input",{bubbles:true}));
- el.dispatchEvent(new Event("change",{bubbles:true}));
- el.dispatchEvent(new Event("blur",{bubbles:true}));
+    // 有些页面把 “copy” 文本作为纯文本存在，这里也去掉
+    let text = (clone.innerText || "")
+      .replace(/\bcopy\b/gi, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
 
- return true;
-}
+    return text;
+  }
 
-console.log("1️⃣ 打开 verification");
+  function hasRealContent(container) {
+    // 1) Key Info 的 key-value block
+    if (container.querySelectorAll('div[style*="padding-bottom"] > b').length > 0) return true;
 
-if(!location.pathname.includes("verification")){
- location.href="/verification";
- return;
-}
+    // 2) 表格有行
+    const rows = [...container.querySelectorAll("table tbody tr")];
+    if (rows.length > 0 && rows.some(tr => (tr.innerText || "").trim().length > 0)) return true;
 
-console.log("2️⃣ 点击 Get Started");
+    // 3) 兜底：清洗后文本还有内容
+    const cleaned = getCleanContent(container);
+    return cleaned.length > 0;
+  }
 
-click(await waitFor(()=>document.querySelector('[data-testid="get-started-button"]')));
+  function extractKeyValues(container) {
+    const kv = {};
+    for (const block of [...container.querySelectorAll('div[style*="padding-bottom"]')]) {
+      const b = block.querySelector("b");
+      if (!b) continue;
+      const key = (b.textContent || "").trim();
+      const raw = (block.innerText || "").trim();
+      const value = raw.replace(key, "").replace(/^[:：\s]+/, "").trim();
+      if (key) kv[key] = value;
+    }
+    return kv;
+  }
 
-console.log("3️⃣ 等待 BRN 输入框");
+  // —— Transaction record ID —— //
+  function getTxnId() {
+    const title = [...document.querySelectorAll("span")]
+      .find(el => ((el.textContent || "").trim() === "Transaction record ID:"));
+    return title?.nextElementSibling?.textContent?.trim() || null;
+  }
 
-await waitFor(()=>document.querySelector('input[name="BusinessRegistrationNumber"]'));
+  async function openViewAllAndReadTxnId() {
+    const viewAll = await waitFor(() => btnByText("view all"), 30000);
+    if (!viewAll) return null;
+    click(viewAll);
 
-setInput(BRN_VALUE);
+    const txnId = await waitFor(() => getTxnId(), 30000);
+    return txnId || null;
+  }
 
-console.log("4️⃣ 点击 Review");
+  // =========================
+  // 1) 跑完整流程
+  // =========================
+  if (!location.pathname.includes("verification")) {
+    location.href = "/verification";
+    return; // 跳转后再次运行即可（或你用 bookmarklet 状态机版）
+  }
 
-click(await waitFor(()=>btn("review")));
+  // Get Started
+  click(await waitFor(() => document.querySelector('[data-testid="get-started-button"]'), 40000));
 
-console.log("5️⃣ 点击 Generate Report");
+  // BRN 输入框出现再填
+  await waitFor(() => document.querySelector('input[name="BusinessRegistrationNumber"]'), 40000);
+  setBRN(BRN_VALUE);
 
-click(await waitFor(()=>btn("generate report")));
+  // Review
+  click(await waitFor(() => btnByText("review"), 40000));
 
-console.log("⏳ 等待报告生成");
+  // Generate Report
+  click(await waitFor(() => btnByText("generate report"), 60000));
 
-await sleep(8000);
+  // 等报告生成（这里仍然给一个保底等待；如果你想更稳可改成等某个元素出现）
+  await sleep(8000);
 
-console.log("6️⃣ 打开 Additional data");
+  // Additional data
+  click(await waitFor(() => btnByText("additional data") || spanByText("additional data"), 60000));
 
-click(await waitFor(()=>btn("additional data")||span("additional data")));
+  // BusinessDetails
+  click(await waitFor(() => spanByText("businessdetails") || categoryByText("businessdetails"), 60000));
 
-console.log("7️⃣ 打开 BusinessDetails");
+  // 右侧容器
+  const container = await waitFor(() => document.querySelector('[data-testid="additional-data-appended-div"]'), 60000);
+  if (!container) {
+    console.log("❌ 未找到 additional-data-appended-div");
+    return;
+  }
 
-click(await waitFor(()=>span("businessdetails")));
+  // =========================
+  // 2) 检测三项 & 提取 Content
+  // =========================
+  const targets = [
+    { item: "Key Info", match: "key information" },
+    { item: "Abnormal", match: "abnormal" },
+    { item: "Change Records", match: "change records" }
+  ];
 
-const container=await waitFor(()=>document.querySelector('[data-testid="additional-data-appended-div"]'));
+  const results = [];
 
-function hasContent(){
- if(container.querySelector('div[style*="padding-bottom"] > b')) return true;
+  for (const t of targets) {
+    const left = categoryByText(t.match) || spanByText(t.match) || spanByText(t.item.toLowerCase());
+    if (!left) {
+      results.push({ item: t.item, hasContent: null, Content: "", note: "左侧未找到该项" });
+      continue;
+    }
 
- const rows=[...container.querySelectorAll("table tbody tr")];
- if(rows.length>0 && rows.some(r=>r.innerText.trim())) return true;
+    click(left);
+    await sleep(250);
+    await waitContainerStable(container, 8000);
 
- return false;
-}
+    const has = hasRealContent(container);
+    const content = has ? getCleanContent(container) : "";
 
-const targets=[
- {name:"Key Info",match:"key information"},
- {name:"Abnormal",match:"abnormal"},
- {name:"Change Records",match:"change records"}
-];
+    const row = { item: t.item, hasContent: has, Content: content };
 
-const results=[];
+    // Key Info 额外解析结构化 KV（可选，但很实用）
+    if (t.item === "Key Info" && has) {
+      row.KeyValues = extractKeyValues(container); // JSON
+    }
 
-for(const t of targets){
+    results.push(row);
+  }
 
- console.log("检测:",t.name);
+  // ✅ 只输出这一张表
+  console.table(results);
 
- click(await waitFor(()=>category(t.match)||span(t.match)));
-
- await sleep(500);
-
- results.push({
- item:t.name,
- hasContent:hasContent()
- });
-
-}
-
-console.log("8️⃣ 获取 Transaction ID");
-
-click(await waitFor(()=>btn("view all")));
-
-const txnId=await waitFor(()=>{
- const title=[...document.querySelectorAll("span")]
- .find(el=>el.textContent.trim()=="Transaction record ID:");
- return title?.nextElementSibling?.textContent.trim();
-});
-
-results.forEach(r=>r.transactionRecordId=txnId);
-
-console.table(results);
-
-console.log("Transaction record ID:",txnId);
+  // =========================
+  // 3) 只输出 Transaction ID（不进表、不输出第二张表）
+  // =========================
+  const txnId = await openViewAllAndReadTxnId();
+  console.log("Transaction record ID:", txnId);
 
 })();
