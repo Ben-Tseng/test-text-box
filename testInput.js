@@ -50,68 +50,110 @@ console.log(rows.length > 0 ? "有内容" : "无内容");
 
 
 
+
+
 (async () => {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  // 点击 Abnormal（warning）
-  const abnormal = [...document.querySelectorAll("span.categoryName")]
-    .find(e => (e.textContent || "").trim().startsWith("Abnormal"));
-  if (!abnormal) return console.log("❌ 未找到 Abnormal");
-  abnormal.click();
-
-  // 等右侧容器出现
-  let container = null;
-  for (let i = 0; i < 40; i++) {
-    container = document.querySelector('[data-testid="additional-data-appended-div"]');
-    if (container) break;
-    await sleep(200);
-  }
-  if (!container) return console.log("❌ 未找到 additional-data-appended-div");
-
-  // 等内容稳定（避免读到旧内容）
-  let last = "";
-  for (let i = 0; i < 20; i++) {
-    const now = container.innerText.trim();
-    if (now && now === last) break;
-    last = now;
-    await sleep(200);
+  async function waitFor(fn, timeout = 15000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const v = fn();
+      if (v) return v;
+      await sleep(200);
+    }
+    return null;
   }
 
-  // ===== 关键判断：只看“真实数据” =====
-  // 找到标题块（你的截图是 b.dataTitle）
-  const titleEl = container.querySelector("b.dataTitle");
-  if (!titleEl) {
-    // 没标题，通常也代表没数据，但先给个兜底判断
-    const anyMeaningful = container.querySelector("table, ul li, ol li, [role='row'], tr td, .row, .cell");
-    console.log(anyMeaningful ? "✅ 有内容" : "✅ 无内容");
-    return;
+  function clickCategory(label) {
+    // 你的左侧是 span.categoryName，文本如 "Key Information (tab...)"、"Abnormal (warning...)"、"Change Records (tab...)"
+    const el = [...document.querySelectorAll("span.categoryName")]
+      .find(s => (s.textContent || "").trim().toLowerCase().includes(label.toLowerCase()));
+    if (!el) return false;
+    el.scrollIntoView({ block: "center" });
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return true;
   }
 
-  // 标题所在的“行容器”（通常是 sc-fuwcr eho8i3 这一行）
-  const lineWrap = titleEl.closest("div");
-  // 获取同一个 data line 区域里所有可见文本
-  const fullText = (lineWrap ? lineWrap.innerText : container.innerText).trim();
-
-  // 去掉标题文本、copy 文本后剩余内容
-  const titleText = titleEl.innerText.trim();
-  const cleaned = fullText
-    .replace(titleText, "")
-    .replace(/\bcopy\b/gi, "")
-    .trim();
-
-  // 同时用 DOM 结构做二次确认：是否存在表格/行/列表等“数据结构”
-  const hasDataStructure = !!container.querySelector(
-    "table tbody tr, ul li, ol li, [role='row'], tr td"
-  );
-
-  // 判定：既没有数据结构，清洗后也没剩余文本 => 真无内容
-  const hasRealContent = hasDataStructure || cleaned.length > 0;
-
-  console.log(hasRealContent ? "✅ Abnormal 有真实内容" : "✅ Abnormal 无真实内容");
-
-  // 如果有真实内容，顺便把内容打印出来（可选）
-  if (hasRealContent) {
-    console.log("------内容（去掉标题/copy后）------");
-    console.log(cleaned || container.innerText.trim());
+  async function waitContainerStable(container, maxMs = 6000) {
+    const start = Date.now();
+    let last = "";
+    let stable = 0;
+    while (Date.now() - start < maxMs) {
+      const now = (container.innerText || "").trim();
+      if (now && now === last) stable++;
+      else stable = 0;
+      last = now;
+      if (stable >= 2) break;
+      await sleep(200);
+    }
   }
+
+  function hasRealContent(container) {
+    // ✅ 1) Key Info 常见结构：div(style padding-bottom) > b(字段名) + 值
+    const kvBlocks = container.querySelectorAll('div[style*="padding-bottom"] > b');
+    if (kvBlocks.length > 0) return true;
+
+    // ✅ 2) Table 结构：有 tbody tr 且里面有 td 文本
+    const rows = [...container.querySelectorAll("table tbody tr")];
+    const hasRowText = rows.some(tr => (tr.innerText || "").trim().length > 0);
+    if (rows.length > 0 && hasRowText) return true;
+
+    // ✅ 3) 兜底：去掉标题(dataTitle)和 copy 后还有剩余文本
+    const clone = container.cloneNode(true);
+    clone.querySelectorAll("b.dataTitle, button.copyTitle").forEach(n => n.remove());
+    const cleaned = (clone.innerText || "").replace(/\bcopy\b/gi, "").trim();
+    return cleaned.length > 0;
+  }
+
+  function extractKeyValues(container) {
+    const kv = {};
+    const blocks = [...container.querySelectorAll('div[style*="padding-bottom"]')];
+    for (const block of blocks) {
+      const b = block.querySelector("b");
+      if (!b) continue;
+      const key = (b.textContent || "").trim();
+      const raw = (block.innerText || "").trim();
+      const value = raw.replace(key, "").replace(/^[:：\s]+/, "").trim();
+      if (key) kv[key] = value;
+    }
+    return kv;
+  }
+
+  const targets = [
+    { name: "Key Info", match: "Key Information" },
+    { name: "Abnormal", match: "Abnormal" },
+    { name: "Change Records", match: "Change Records" }
+  ];
+
+  const container = await waitFor(() => document.querySelector('[data-testid="additional-data-appended-div"]'));
+  if (!container) return console.log("❌ 未找到右侧容器 additional-data-appended-div");
+
+  const results = [];
+
+  for (const t of targets) {
+    const ok = clickCategory(t.match);
+    if (!ok) {
+      results.push({ item: t.name, found: false, hasContent: null, note: "左侧未找到该项" });
+      continue;
+    }
+
+    // 等待右侧渲染/稳定
+    await sleep(300);
+    await waitContainerStable(container, 7000);
+
+    const has = hasRealContent(container);
+
+    const row = { item: t.name, found: true, hasContent: has };
+
+    // Key Info 额外提取字段，方便你核对
+    if (t.name === "Key Info" && has) {
+      row.sample = extractKeyValues(container);
+    }
+
+    results.push(row);
+  }
+
+  console.table(results);
+
 })();
