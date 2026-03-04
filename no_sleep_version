@@ -161,20 +161,73 @@ if(!input){
 
 console.log("STEP 4 → Fill BRN");
 
-setBRN(BRN_VALUE);
+async function fillBRNAndConfirm(BRN_VALUE, timeout = 30000) {
+  const start = Date.now();
 
-await waitFor(()=>{
- const el=document.querySelector('input[name="BusinessRegistrationNumber"]');
- return el && el.value===BRN_VALUE;
-});
+  const getEl = () => document.querySelector('input[name="BusinessRegistrationNumber"]');
+
+  // 让 value 写入更像真实用户
+  const setValueReactSafe = (el, value) => {
+    el.focus();
+
+    // 清空一次（很多表单库需要）
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    setter.call(el, "");
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+
+    // 再写入目标值
+    setter.call(el, value);
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: value }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+
+    el.blur();
+  };
+
+  // 判断“值是否稳定”：连续 3 次（每次间隔 200ms）都等于目标值
+  const isStable = async () => {
+    for (let i = 0; i < 3; i++) {
+      const el = getEl();
+      if (!el || el.value !== BRN_VALUE) return false;
+      await sleep(200);
+    }
+    return true;
+  };
+
+  // 在超时时间内不断重试填入直到稳定
+  while (Date.now() - start < timeout) {
+    const el = getEl();
+    if (!el) {
+      await sleep(200);
+      continue;
+    }
+
+    setValueReactSafe(el, BRN_VALUE);
+
+    // 给 React 一个短暂时间处理事件
+    await sleep(250);
+
+    if (await isStable()) return true;
+
+    // 若被 React 回写清空，继续重试
+    await sleep(250);
+  }
+
+  return false;
+}
 
 console.log("STEP 5 → Wait Review enable");
+const reviewBtn = await waitFor(() => {
+  const b = btn("review");
+  if (!b) return null;
+  const disabled = b.disabled || b.getAttribute("aria-disabled") === "true";
+  return disabled ? null : b;
+}, 60000);
 
-const reviewBtn=await waitFor(()=>{
- const b=btn("review");
- return btnEnabled(b)?b:null;
-});
-
+if (!reviewBtn) {
+  console.log("❌ Review 按钮未启用：通常代表 BRN 未通过校验/未生效");
+  return;
+}
 click(reviewBtn);
 
 console.log("STEP 6 → Generate Report");
