@@ -11,3 +11,8 @@ el.dispatchEvent(new Event("change", { bubbles: true }));
 
 // 有些页面还会监听 blur
 el.dispatchEvent(new Event("blur", { bubbles: true }));
+
+
+[...document.querySelectorAll("button")]
+.find(b => b.innerText.includes("Generate Report"))
+.click();
