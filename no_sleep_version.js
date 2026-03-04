@@ -161,59 +161,61 @@ if(!input){
 
 console.log("STEP 4 → Fill BRN");
 
-async function fillBRNAndConfirm(BRN_VALUE, timeout = 30000) {
+async function waitStableElement(getter, stableMs = 400, timeout = 30000) {
   const start = Date.now();
+  let el = null;
+  let sameSince = 0;
 
-  const getEl = () => document.querySelector('input[name="BusinessRegistrationNumber"]');
-
-  // 让 value 写入更像真实用户
-  const setValueReactSafe = (el, value) => {
-    el.focus();
-
-    // 清空一次（很多表单库需要）
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-    setter.call(el, "");
-    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContentBackward", data: null }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-
-    // 再写入目标值
-    setter.call(el, value);
-    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: value }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-
-    el.blur();
-  };
-
-  // 判断“值是否稳定”：连续 3 次（每次间隔 200ms）都等于目标值
-  const isStable = async () => {
-    for (let i = 0; i < 3; i++) {
-      const el = getEl();
-      if (!el || el.value !== BRN_VALUE) return false;
-      await sleep(200);
-    }
-    return true;
-  };
-
-  // 在超时时间内不断重试填入直到稳定
   while (Date.now() - start < timeout) {
-    const el = getEl();
-    if (!el) {
-      await sleep(200);
+    const cur = getter();
+    if (!cur) {
+      el = null;
+      sameSince = 0;
+      await sleep(100);
       continue;
     }
 
-    setValueReactSafe(el, BRN_VALUE);
+    if (cur === el) {
+      sameSince += 100;
+      if (sameSince >= stableMs) return cur; // ✅ 节点稳定
+    } else {
+      el = cur;
+      sameSince = 0;
+    }
 
-    // 给 React 一个短暂时间处理事件
-    await sleep(250);
-
-    if (await isStable()) return true;
-
-    // 若被 React 回写清空，继续重试
-    await sleep(250);
+    await sleep(100);
   }
+  return null;
+}
 
-  return false;
+async function fillBRN_byId_and_confirm(value) {
+  // 1) 等 input 节点稳定（关键）
+  const el = await waitStableElement(
+    () => document.getElementById("BusinessRegistrationNumber"),
+    500,
+    30000
+  );
+  if (!el) return false;
+
+  // 2) 用你验证过的写入方式
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+  el.focus();
+  setter.call(el, value);
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  el.dispatchEvent(new Event("blur", { bubbles: true }));
+
+  // 3) 确认值“稳定存在”（防被 React 回写清空）
+  const ok = await waitFor(async () => {
+    const cur = document.getElementById("BusinessRegistrationNumber");
+    if (!cur) return false;
+    if (cur.value !== value) return false;
+    await sleep(150);
+    const cur2 = document.getElementById("BusinessRegistrationNumber");
+    return cur2 && cur2.value === value;
+  }, 8000);
+
+  return !!ok;
 }
 
 console.log("STEP 5 → Wait Review enable");
