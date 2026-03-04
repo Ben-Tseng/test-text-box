@@ -166,7 +166,7 @@ console.log(rows.length > 0 ? "有内容" : "无内容");
 document.querySelector('a[href="/verification"]').click()
 // 等待2.5秒
 document.querySelector('[data-testid="get-started-button"]').click()
-// 等待0.5s
+// 等待0.3s
 
 const el = document.getElementById("BusinessRegistrationNumber");
 const value = "12345678";
@@ -183,6 +183,7 @@ el.dispatchEvent(new Event("change", { bubbles: true }));
 el.dispatchEvent(new Event("blur", { bubbles: true }));
 
 document.querySelector('[data-testid="review-selection-button-available"]').click()
+// 0.2s
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("Generate Report")) .click()
 //等8秒
@@ -198,22 +199,37 @@ document.querySelector('[data-testid="review-selection-button-available"]').clic
 [...document.querySelectorAll("span")] .find(el=>el.textContent.includes("Key Info")) .click();
 
 [...document.querySelectorAll("button")] .find(b=>b.innerText.includes("View all")) .click()
+// 0.4s
 
 
 
 
 
-const title = [...document.querySelectorAll("span")]
-  .find(el => el.textContent.trim() === "Transaction record ID:");
-
-const value = title.nextElementSibling.textContent.trim();
-
-const text = `Transaction record ID: ${value}`;
-
-navigator.clipboard.writeText(text);
-
-console.log("已复制:", text);
 
 
-// 一行高手版
-navigator.clipboard.writeText([...document.querySelectorAll("span")].find(e=>e.textContent.trim()=="Transaction record ID:").nextElementSibling.textContent.trim())
+
+
+// 三种取ID的方法
+document.querySelector(".copyTransactionRecordId").click();
+
+//
+const btn = document.querySelector(".copyTransactionRecordId");
+
+if(btn){
+    btn.click();
+    console.log("已触发复制");
+}else{
+    console.log("未找到复制按钮");
+}
+
+// 3
+const id = document.querySelector('.StModalFieldTitle-sc-1ini8z8-0')
+  ?.nextElementSibling?.textContent.trim();
+
+console.log(id);
+
+//4
+document.querySelector(".copyTransactionRecordId")?.click()
+
+//5
+document.querySelector(".copyTransactionRecordId")?.click()
