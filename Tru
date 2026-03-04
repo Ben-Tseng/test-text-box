@@ -1,0 +1,1 @@
+javascript:(()=>{const s=document.createElement('script');s.type='text/javascript';s.textContent=`(${(async()=>{ /* 占位：请用上面可读版源码替换成一行压缩版 */ }).toString()})()`;document.body.appendChild(s);s.remove();})()
