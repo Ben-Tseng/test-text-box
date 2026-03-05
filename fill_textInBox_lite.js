@@ -1,27 +1,43 @@
-function findInFrames(win) {
-  try {
-    const doc = win.document;
+(function () {
 
-    const nameEl = doc.querySelector('.no-side-padding + .normal-input strong');
-    const ta = doc.querySelector('#annotationText');
+  // 获取所有 iframe
+  const iframes = document.querySelectorAll("iframe");
 
-    if (nameEl) window.bizName = nameEl.innerText.trim();
-    if (ta) window.annotation = ta;
+  let businessName = null;
+  let textarea = null;
 
-    for (let i = 0; i < win.frames.length; i++) {
-      findInFrames(win.frames[i]);
-    }
-  } catch (e) {}
-}
+  iframes.forEach(frame => {
+    try {
+      const doc = frame.contentDocument || frame.contentWindow.document;
 
-findInFrames(window);
+      // 找 Business Name
+      const nameEl = doc.querySelector('.no-side-padding + .normal-input strong');
+      if (nameEl) {
+        businessName = nameEl.innerText.trim();
+      }
 
-if (window.bizName && window.annotation) {
-  const setter = Object.getOwnPropertyDescriptor(
-    HTMLTextAreaElement.prototype,
-    "value"
-  ).set;
+      // 找 annotation textarea
+      const ta = doc.querySelector('#annotationText');
+      if (ta) {
+        textarea = ta;
+      }
 
-  setter.call(window.annotation, window.bizName);
-  window.annotation.dispatchEvent(new Event("input", { bubbles: true }));
-}
+    } catch (e) {}
+  });
+
+  if (businessName && textarea) {
+
+    // React textarea setter
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value"
+    ).set;
+
+    setter.call(textarea, businessName);
+
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+
+    console.log("已写入:", businessName);
+  }
+
+})();
