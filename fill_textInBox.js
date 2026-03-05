@@ -1,21 +1,25 @@
 (() => {
-  // 1) 在当前 document 里找 “Business Name” 对应的 strong 文本
-  function getBusinessName(doc) {
-    // 找到包含 "Business Name" 的块（按你图里的结构：section.row.sop-entry-question）
-    const containers = Array.from(
-      doc.querySelectorAll('section.row.sop-entry-question, section.row.sop-entry, article, div')
-    );
+  // 精确取 “Business Name” 这一行右侧的值（strong）
+  function extractBusinessName(doc) {
+    // 1) 找到文本内容 *等于* Business Name 的 label 节点（通常是 <div>Business Name</div>）
+    const label = Array.from(doc.querySelectorAll('div, span, label'))
+      .find(el => el.textContent && el.textContent.trim() === 'Business Name');
 
-    const hit = containers.find(el => el && el.textContent && el.textContent.includes('Business Name'));
-    if (!hit) return null;
+    if (!label) return null;
 
-    // 取该块内的 strong（你第二张图就是 strong 包住中文名）
-    const strong = hit.querySelector('strong');
-    return strong ? strong.innerText.trim() : null;
+    // 2) 往上找最近的“这一行”的容器（你图里是 div.row）
+    const row = label.closest('.row') || label.parentElement;
+    if (!row) return null;
+
+    // 3) 在这一行里找右侧输入区域（normal-input）里的 strong
+    const valueStrong =
+      row.querySelector('.normal-input strong') ||
+      row.querySelector('strong');
+
+    return valueStrong ? valueStrong.textContent.trim() : null;
   }
 
-  // 2) 找到注释输入框 textarea
-  function getAnnotationTextarea(doc) {
+  function findAnnotationTextarea(doc) {
     return (
       doc.querySelector('#annotationText') ||
       doc.querySelector('textarea[name="annotationText"]') ||
@@ -23,40 +27,42 @@
     );
   }
 
-  // 3) 写入并触发事件（React 常用）
-  function setTextareaValue(textarea, value) {
+  // React/受控输入常用：用原生 setter + input/change 事件
+  function setTextarea(textarea, value) {
     textarea.focus();
-    textarea.value = value;
+
+    const proto = Object.getPrototypeOf(textarea);
+    const desc = Object.getOwnPropertyDescriptor(proto, 'value');
+    if (desc && desc.set) desc.set.call(textarea, value);
+    else textarea.value = value;
 
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  // 4) 如果页面有 iframe，尝试在主文档和子 frame 里都找一遍
-  const docsToTry = [document];
+  // 如果内容在 iframe，主文档和 frame 都试一下
+  const docs = [document];
   document.querySelectorAll('iframe').forEach(f => {
-    try {
-      if (f.contentDocument) docsToTry.push(f.contentDocument);
-    } catch (_) {}
+    try { if (f.contentDocument) docs.push(f.contentDocument); } catch (_) {}
   });
 
-  let name = null;
-  let targetTA = null;
+  let bizName = null;
+  let ta = null;
 
-  for (const doc of docsToTry) {
-    if (!name) name = getBusinessName(doc);
-    if (!targetTA) targetTA = getAnnotationTextarea(doc);
+  for (const d of docs) {
+    if (!bizName) bizName = extractBusinessName(d);
+    if (!ta) ta = findAnnotationTextarea(d);
   }
 
-  if (!name) {
-    console.warn('没找到 Business Name 对应的 <strong> 文本（检查是否在 iframe / 文案是否不是 "Business Name"）');
+  if (!bizName) {
+    console.warn('没取到 Business Name。确认页面上 label 文本是否正好是 "Business Name"（大小写/空格/语言）。');
     return;
   }
-  if (!targetTA) {
-    console.warn('没找到 annotation textarea（检查 id 是否确实是 annotationText，或是否在 iframe）');
+  if (!ta) {
+    console.warn('没找到 annotation textarea（#annotationText）。可能在 iframe 或 id 不同。');
     return;
   }
 
-  setTextareaValue(targetTA, name);
-  console.log('已写入 annotationText:', name);
+  setTextarea(ta, bizName);
+  console.log('✅ 已写入 Business Name 到 annotationText:', bizName);
 })();
