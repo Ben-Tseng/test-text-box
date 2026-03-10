@@ -1,5 +1,27 @@
-const el = document.getElementById('calypso_bl_legitimacy_question_calypso_override_other');
-const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
-setter.call(el, 'fail');
+[...document.querySelectorAll('iframe')].map((f, i) => ({
+  index: i,
+  id: f.id,
+  name: f.name,
+  src: f.src
+}));
+
+[...document.querySelectorAll('iframe')].forEach((f, i) => {
+  try {
+    const el = f.contentDocument?.getElementById('calypso_bl_legitimacy_question_calypso_override_other');
+    if (el) {
+      console.log('found in iframe index:', i, el, el.tagName, el.constructor.name);
+    }
+  } catch (e) {
+    console.log('cannot access iframe index:', i, e.message);
+  }
+});
+
+const frame = document.querySelectorAll('iframe')[0]; // 换成实际找到的 index
+const doc = frame.contentDocument || frame.contentWindow.document;
+const el = doc.getElementById('calypso_bl_legitimacy_question_calypso_override_other');
+
+el.focus();
+el.value = 'fail';
 el.dispatchEvent(new Event('input', { bubbles: true }));
 el.dispatchEvent(new Event('change', { bubbles: true }));
+el.dispatchEvent(new Event('blur', { bubbles: true }));
