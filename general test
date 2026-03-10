@@ -1,76 +1,43 @@
 (async function () {
-  const targetId = "calypso_bl_legitimacy_question_calypso_override_other";
-  const text = "fail";
+  const radioSelector = 'input[value="OTHER"]';
+  const textareaId = 'calypso_bl_legitimacy_question_calypso_override_other';
+  const text = 'fail';
 
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  function fireMouse(el, type) {
-    el.dispatchEvent(new MouseEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      view: el.ownerDocument.defaultView
-    }));
-  }
+  async function runInDoc(doc, where) {
+    const radio = doc.querySelector(radioSelector);
+    const ta = doc.getElementById(textareaId);
+    if (!radio || !ta) return false;
 
-  function fireKey(el, type, key) {
-    el.dispatchEvent(new KeyboardEvent(type, {
-      key,
-      bubbles: true,
-      cancelable: true
-    }));
-  }
+    radio.click();
+    radio.checked = true;
+    radio.dispatchEvent(new Event('input', { bubbles: true }));
+    radio.dispatchEvent(new Event('change', { bubbles: true }));
 
-  async function tryType(doc, where) {
-    const el = doc.getElementById(targetId);
-    if (!el) return false;
+    await sleep(300);
 
-    el.scrollIntoView({ block: "center", inline: "center" });
+    ta.focus();
+    ta.value = text;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    ta.dispatchEvent(new Event('change', { bubbles: true }));
 
-    fireMouse(el, "mouseover");
-    fireMouse(el, "mousedown");
-    fireMouse(el, "mouseup");
-    fireMouse(el, "click");
-    el.focus();
-
-    await sleep(100);
-
-    el.value = "";
-    for (const ch of text) {
-      fireKey(el, "keydown", ch);
-      fireKey(el, "keypress", ch);
-
-      el.value += ch;
-      el.dispatchEvent(new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        data: ch,
-        inputType: "insertText"
-      }));
-
-      fireKey(el, "keyup", ch);
-      await sleep(50);
-    }
-
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-    fireMouse(el, "blur");
-
-    console.log("filled:", where, "=>", el.value);
+    console.log('done in', where, {
+      radioChecked: radio.checked,
+      value: ta.value
+    });
     return true;
   }
 
-  if (await tryType(document, "top")) return;
+  if (await runInDoc(document, 'top')) return;
 
-  const frames = document.querySelectorAll("iframe");
+  const frames = document.querySelectorAll('iframe');
   for (let i = 0; i < frames.length; i++) {
     try {
       const doc = frames[i].contentDocument || frames[i].contentWindow.document;
-      if (doc && await tryType(doc, `iframe[${i}]`)) return;
-    } catch (e) {
-      console.log(`iframe[${i}] inaccessible`);
-    }
+      if (doc && await runInDoc(doc, `iframe[${i}]`)) return;
+    } catch (e) {}
   }
 
-  console.log("not found");
+  console.log('not found');
 })();
