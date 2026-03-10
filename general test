@@ -1,17 +1,36 @@
-const frame = document.querySelectorAll('iframe')[4];
-const doc = frame.contentDocument || frame.contentWindow.document;
-const el = doc.getElementById('calypso_bl_legitimacy_question_calypso_override_other');
+(function () {
+  const targetId = "calypso_bl_legitimacy_question_calypso_override_other";
+  const text = "fail";
 
-const setter = Object.getOwnPropertyDescriptor(el.constructor.prototype, 'value')?.set;
-if (setter) {
-  setter.call(el, 'fail');
-} else {
-  el.value = 'fail';
-}
+  function fill(doc, where) {
+    const el = doc.getElementById(targetId);
+    if (!el) return false;
 
-el.focus();
-el.dispatchEvent(new Event('input', { bubbles: true }));
-el.dispatchEvent(new Event('change', { bubbles: true }));
-el.dispatchEvent(new Event('blur', { bubbles: true }));
+    el.focus();
+    el.value = text;
 
-console.log('value =', el.value);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    el.dispatchEvent(new Event("blur", { bubbles: true }));
+
+    console.log("✅ filled in:", where, "value =", el.value);
+    return true;
+  }
+
+  // 先检查主页面
+  if (fill(document, "top document")) return;
+
+  // 遍历所有 iframe
+  const frames = document.querySelectorAll("iframe");
+
+  for (let i = 0; i < frames.length; i++) {
+    try {
+      const doc = frames[i].contentDocument || frames[i].contentWindow.document;
+      if (doc && fill(doc, `iframe[${i}]`)) return;
+    } catch (e) {
+      console.log(`iframe[${i}] 无法访问`);
+    }
+  }
+
+  console.log("❌ 没找到 textarea");
+})();
