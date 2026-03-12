@@ -1,5 +1,26 @@
-Array.from(document.querySelectorAll('button'))
-    .find(btn => btn.textContent.toLowerCase().includes('resolve without'))?.click();
-setTimeout(() => {
-            document.getElementById("outcome-wizard-submit-btn").click();
-        }, 2000);     }}
+function autoClickFlow() {
+
+    const observer = new MutationObserver(() => {
+
+        const outcomeBtn = document.querySelector('.outcome-button');
+        if (outcomeBtn && !outcomeBtn.dataset.clicked) {
+            outcomeBtn.dataset.clicked = "true";
+            outcomeBtn.click();
+            console.log("Outcome clicked");
+        }
+
+        const submitBtn = document.querySelector('#submit');
+        if (submitBtn) {
+            submitBtn.click();
+            observer.disconnect();
+        }
+
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+autoClickFlow();
