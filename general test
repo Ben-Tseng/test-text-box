@@ -1,46 +1,5 @@
-(async function () {
-  const radioSelector = 'input[value="OTHER"]';
-  const textareaId = 'calypso_bl_legitimacy_question_calypso_override_other';
-  const text = 'i2v fail';
-
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-  async function runInDoc(doc, where) {
-    const radio = doc.querySelector(radioSelector);
-    const ta = doc.getElementById(textareaId);
-    if (!radio || !ta) return false;
-
-    radio.click();
-    radio.checked = true;
-    radio.dispatchEvent(new Event('input', { bubbles: true }));
-    radio.dispatchEvent(new Event('change', { bubbles: true }));
-
-    await sleep(300);
-
-    ta.focus();
-    ta.value = text;
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
-    ta.dispatchEvent(new Event('change', { bubbles: true }));
-
-    console.log('done in', where, {
-      radioChecked: radio.checked,
-      value: ta.value
-    });
-    return true;
-  }
-
-  if (await runInDoc(document, 'top')) return;
-
-  const frames = document.querySelectorAll('iframe');
-  for (let i = 0; i < frames.length; i++) {
-    try {
-      const doc = frames[i].contentDocument || frames[i].contentWindow.document;
-      if (doc && await runInDoc(doc, `iframe[${i}]`)) return;
-    } catch (e) {}
-  }
-
-  console.log('not found');
-})();
-
-
-javascript:(function(){function findAndClickInputs(doc){try{const inputs=doc.querySelectorAll('input[value="calypso_answer_positive"]');if(inputs.length>0){inputs.forEach(input=>input.click());console.log(`%E2%9C%85 Clicked ${inputs.length} calypso_answer_positive input(s)`);return true}return false}catch(error){console.log("%E2%9D%8C Error clicking inputs:",error);return false}}function performAdditionalActions(doc){try{const navbarBrand=doc.querySelector('h2.navbar-brand');if(navbarBrand){if(navbarBrand.textContent==="Identity Verification"){const noLabel=doc.querySelector('label[for="calypso_na_siv_idv_legitimacy_question_calypso_answer_negative"]');if(noLabel){noLabel.click();console.log("%E2%9C%85 Clicked No");setTimeout(()=>{const overrideLabel=doc.querySelector('label[for="calypso_na_siv_idv_legitimacy_question_calypso_override_other"]');if(overrideLabel){overrideLabel.click();console.log("%E2%9C%85 Clicked Document type not accepted.")}else{console.log("%E2%9A%A0%EF%B8%8F Document type not accepted. label not found")}},500);setTimeout(()=>{doc.querySelector('label[for="calypso_na_idv_final_question_outcome_calypso_answer_fail"]').click()},1000)}else{console.log("%E2%9A%A0%EF%B8%8F No label not found")}}else if(navbarBrand.textContent==="Business Verification"){const noLabel=doc.querySelector('label[for="calypso_bl_legitimacy_question_calypso_answer_negative"]');if(noLabel){noLabel.click();console.log("%E2%9C%85 Clicked No");setTimeout(()=>{const overrideLabel=doc.querySelector('label[for="calypso_bl_legitimacy_question_calypso_override_other"]');if(overrideLabel){overrideLabel.click();console.log("%E2%9C%85 Clicked Document type not accepted.")}else{console.log("%E2%9A%A0%EF%B8%8F Document type not accepted. label not found")}},500);setTimeout(()=>{doc.querySelector('label[for="calypso_na_biv_final_question_outcome_calypso_answer_fail"]').click()},1000)}else{console.log("%E2%9A%A0%EF%B8%8F No label not found")}}else{console.log("%E2%9A%A0%EF%B8%8F Unknown navbar-brand content:",navbarBrand.textContent)}}else{console.log("%E2%9A%A0%EF%B8%8F navbar-brand element not found")}}catch(error){console.log("%E2%9D%8C Error in additional actions:",error)}}function searchAllFrames(win){try{if(findAndClickInputs(win.document)){performAdditionalActions(win.document);return true}for(let i=0;i<win.frames.length;i++){if(searchAllFrames(win.frames[i])){return true}}}catch(error){}return false}if(!searchAllFrames(window)){alert("%E2%9D%8C %E5%BD%93%E5%89%8D%E9%A1%B5%E9%9D%A2%E6%9C%AA%E6%89%BE%E5%88%B0 value='calypso_answer_positive' %E7%9A%84%E8%BE%93%E5%85%A5%E6%A1%86%EF%BC%81")}})();
+Array.from(document.querySelectorAll('button'))
+    .find(btn => btn.textContent.toLowerCase().includes('resolve without'))?.click();
+setTimeout(() => {
+            document.getElementById("outcome-wizard-submit-btn").click();
+        }, 2000);     }}
