@@ -1,18 +1,13 @@
-// ==UserScript==
-// @name         Auto Timestamp Bot (Stable)
-// @match        *://*/*
-// @grant        none
-// ==/UserScript==
+function startAutoTimestampBot(options = {}) {
+    console.log("✅ 自动打卡函数已启动");
 
-(function() {
-    'use strict';
-
-    console.log("✅ 自动打卡脚本已启动");
-
-    const TARGET_TIMES = [
+    const TARGET_TIMES = options.times || [
         { h: 7, m: 55, key: "morning" },
         { h: 17, m: 0, key: "evening" }
     ];
+
+    const REFRESH_INTERVAL = options.refreshInterval || 60 * 60 * 1000;
+    const CHECK_INTERVAL = options.checkInterval || 60 * 1000;
 
     function todayKey(name) {
         const d = new Date();
@@ -88,7 +83,6 @@
 
             const diff = now - target;
 
-            // 在目标时间 ±5分钟内执行
             if (diff > 0 && diff < 5 * 60 * 1000) {
                 if (!alreadyDone(t.key)) {
                     clickLogic(t.key);
@@ -99,16 +93,23 @@
         });
     }
 
-    // 每分钟检查一次时间（更稳）
-    setInterval(checkAndRun, 60 * 1000);
+    // 启动定时器
+    const checkTimer = setInterval(checkAndRun, CHECK_INTERVAL);
 
-    // 页面加载时立即检查一次
-    checkAndRun();
-
-    // 每1小时自动刷新页面
-    setInterval(() => {
+    const refreshTimer = setInterval(() => {
         console.log("🔄 页面刷新：" + new Date().toLocaleTimeString());
         location.reload();
-    }, 60 * 60 * 1000);
+    }, REFRESH_INTERVAL);
 
-})();
+    // 立即执行一次检查
+    checkAndRun();
+
+    // 返回控制器（高级用法）
+    return {
+        stop: () => {
+            clearInterval(checkTimer);
+            clearInterval(refreshTimer);
+            console.log("🛑 自动打卡已停止");
+        }
+    };
+}
