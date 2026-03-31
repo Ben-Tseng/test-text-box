@@ -1,36 +1,47 @@
-javascript:(function(){
-    alert("Bookmarklet 已执行");
+// ==UserScript==
+// @name         Auto Timestamp Bot (Stable)
+// @match        *://*/*
+// @grant        none
+// ==/UserScript==
 
-    console.log("脚本开始运行");
+(function() {
+    'use strict';
 
-    function getDelayUntil(hour, minute) {
-        const now = new Date();
-        const target = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            hour,
-            minute,
-            0,
-            0
-        );
-        return target - now;
+    console.log("✅ 自动打卡脚本已启动");
+
+    const TARGET_TIMES = [
+        { h: 7, m: 55, key: "morning" },
+        { h: 17, m: 0, key: "evening" }
+    ];
+
+    function todayKey(name) {
+        const d = new Date();
+        return `${name}-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     }
 
-    function clickLogic() {
-        alert("开始点击逻辑");
+    function alreadyDone(name) {
+        return localStorage.getItem(todayKey(name)) === "done";
+    }
+
+    function markDone(name) {
+        localStorage.setItem(todayKey(name), "done");
+    }
+
+    function clickLogic(tag) {
+        console.log("🚀 执行打卡逻辑:", tag);
 
         const btn1 = document.querySelector('.related-item__btn[title="My Timestamp"]');
 
         if (btn1) {
-            alert("走 iframe 逻辑");
+            console.log("👉 使用 iframe 逻辑");
+
             btn1.click();
 
             setTimeout(() => {
                 const iframe = document.getElementById('widgetFrame3818');
 
                 if (!iframe) {
-                    alert("iframe 没找到");
+                    console.log("❌ iframe 未找到");
                     return;
                 }
 
@@ -39,41 +50,65 @@ javascript:(function(){
 
                 if (btn2) {
                     btn2.click();
-                    alert("iframe 内按钮已点击");
+                    console.log("✅ iframe 打卡成功");
+                    markDone(tag);
                 } else {
-                    alert("iframe 内按钮没找到");
+                    console.log("❌ iframe 按钮未找到");
                 }
 
             }, 8000);
 
         } else {
-            alert("走直接点击逻辑");
+            console.log("👉 使用直接点击逻辑");
 
             const btn = document.getElementById("ess.recordTimestampButton.Label");
 
             if (btn) {
                 btn.click();
-                alert("直接点击成功");
+                console.log("✅ 直接打卡成功");
+                markDone(tag);
             } else {
-                alert("按钮没找到");
+                console.log("❌ 按钮未找到");
             }
         }
     }
 
-    function scheduleOnce(hour, minute) {
-        const delay = getDelayUntil(hour, minute);
+    function checkAndRun() {
+        const now = new Date();
 
-        console.log(hour + ":" + minute + " delay=", delay);
+        TARGET_TIMES.forEach(t => {
+            const target = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                t.h,
+                t.m,
+                0
+            );
 
-        if (delay > 0) {
-            setTimeout(clickLogic, delay);
-            alert("已设置 " + hour + ":" + minute);
-        } else {
-            alert(hour + ":" + minute + " 已过");
-        }
+            const diff = now - target;
+
+            // 在目标时间 ±5分钟内执行
+            if (diff > 0 && diff < 5 * 60 * 1000) {
+                if (!alreadyDone(t.key)) {
+                    clickLogic(t.key);
+                } else {
+                    console.log(`⏩ ${t.key} 已执行过`);
+                }
+            }
+        });
     }
 
-    scheduleOnce(7,55);
-    scheduleOnce(17,0);
+    // 每分钟检查一次时间（更稳）
+    setInterval(checkAndRun, 60 * 1000);
+
+    // 页面加载时立即检查一次
+    checkAndRun();
+
+    // 每1小时自动刷新页面
+    setInterval(() => {
+        console.log("🔄 页面刷新：" + new Date().toLocaleTimeString());
+        location.reload();
+    }, 60 * 60 * 1000);
 
 })();
