@@ -1,13 +1,11 @@
-function startAutoTimestampBot(options = {}) {
-    console.log("✅ 自动打卡函数已启动");
+function startSmartTimestampBot() {
 
-    const TARGET_TIMES = options.times || [
+    console.log("🚀 智能打卡监听已启动");
+
+    const TARGET_TIMES = [
         { h: 7, m: 55, key: "morning" },
         { h: 17, m: 0, key: "evening" }
     ];
-
-    const REFRESH_INTERVAL = options.refreshInterval || 60 * 60 * 1000;
-    const CHECK_INTERVAL = options.checkInterval || 60 * 1000;
 
     function todayKey(name) {
         const d = new Date();
@@ -22,94 +20,107 @@ function startAutoTimestampBot(options = {}) {
         localStorage.setItem(todayKey(name), "done");
     }
 
-    function clickLogic(tag) {
-        console.log("🚀 执行打卡逻辑:", tag);
+    // 🎯 模拟更真实点击
+    function humanClick(el) {
+        if (!el) return;
 
-        const btn1 = document.querySelector('.related-item__btn[title="My Timestamp"]');
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
 
-        if (btn1) {
-            console.log("👉 使用 iframe 逻辑");
+        setTimeout(() => {
+            el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+            el.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+            el.click();
+        }, Math.random() * 800 + 200);
+    }
 
-            btn1.click();
+    function tryClick(tag) {
 
-            setTimeout(() => {
-                const iframe = document.getElementById('widgetFrame3818');
+        // 1️⃣ 主页面
+        let btn = document.getElementById("ess.recordTimestampButton.Label");
 
-                if (!iframe) {
-                    console.log("❌ iframe 未找到");
-                    return;
+        if (btn) {
+            console.log("✅ 主页面命中");
+            humanClick(btn);
+            markDone(tag);
+            return true;
+        }
+
+        // 2️⃣ iframe
+        const iframes = document.querySelectorAll("iframe");
+
+        for (let iframe of iframes) {
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+                // iframe 入口按钮
+                const entry = document.querySelector('.related-item__btn[title="My Timestamp"]');
+                if (entry) {
+                    humanClick(entry);
                 }
 
-                const doc = iframe.contentDocument || iframe.contentWindow.document;
                 const btn2 = doc.querySelector('button[title="Record Timestamp"]');
 
                 if (btn2) {
-                    btn2.click();
-                    console.log("✅ iframe 打卡成功");
+                    console.log("✅ iframe 命中");
+                    humanClick(btn2);
                     markDone(tag);
-                } else {
-                    console.log("❌ iframe 按钮未找到");
+                    return true;
                 }
 
-            }, 8000);
-
-        } else {
-            console.log("👉 使用直接点击逻辑");
-
-            const btn = document.getElementById("ess.recordTimestampButton.Label");
-
-            if (btn) {
-                btn.click();
-                console.log("✅ 直接打卡成功");
-                markDone(tag);
-            } else {
-                console.log("❌ 按钮未找到");
-            }
+            } catch (e) {}
         }
+
+        return false;
     }
 
-    function checkAndRun() {
+    function inTimeWindow(target) {
         const now = new Date();
 
-        TARGET_TIMES.forEach(t => {
-            const target = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate(),
-                t.h,
-                t.m,
-                0
-            );
+        const t = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            target.h,
+            target.m,
+            0
+        );
 
-            const diff = now - target;
+        const diff = now - t;
 
-            if (diff > 0 && diff < 5 * 60 * 1000) {
-                if (!alreadyDone(t.key)) {
-                    clickLogic(t.key);
-                } else {
-                    console.log(`⏩ ${t.key} 已执行过`);
-                }
-            }
-        });
+        return diff > 0 && diff < 5 * 60 * 1000;
     }
 
-    // 启动定时器
-    const checkTimer = setInterval(checkAndRun, CHECK_INTERVAL);
+    // 🔥 DOM 监听核心
+    const observer = new MutationObserver(() => {
+        TARGET_TIMES.forEach(t => {
 
-    const refreshTimer = setInterval(() => {
-        console.log("🔄 页面刷新：" + new Date().toLocaleTimeString());
-        location.reload();
-    }, REFRESH_INTERVAL);
+            if (!alreadyDone(t.key) && inTimeWindow(t)) {
 
-    // 立即执行一次检查
-    checkAndRun();
+                const success = tryClick(t.key);
 
-    // 返回控制器（高级用法）
-    return {
-        stop: () => {
-            clearInterval(checkTimer);
-            clearInterval(refreshTimer);
-            console.log("🛑 自动打卡已停止");
-        }
-    };
+                if (success) {
+                    console.log("🎉 打卡完成:", t.key);
+                } else {
+                    console.log("⏳ 元素还没出现，继续监听...");
+                }
+            }
+
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // 页面加载时也跑一次
+    setTimeout(() => {
+        TARGET_TIMES.forEach(t => {
+            if (!alreadyDone(t.key) && inTimeWindow(t)) {
+                tryClick(t.key);
+            }
+        });
+    }, 2000);
+
+    console.log("👀 正在监听 DOM 变化...");
 }
