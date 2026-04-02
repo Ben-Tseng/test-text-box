@@ -1,11 +1,13 @@
 function startSmartTimestampBot() {
 
-    console.log("🚀 智能打卡监听已启动");
+    console.log("🚀 智能打卡（带验证）已启动");
 
     const TARGET_TIMES = [
         { h: 7, m: 55, key: "morning" },
         { h: 17, m: 0, key: "evening" }
     ];
+
+    const MAX_RETRY = 5;
 
     function todayKey(name) {
         const d = new Date();
@@ -20,50 +22,52 @@ function startSmartTimestampBot() {
         localStorage.setItem(todayKey(name), "done");
     }
 
-    // 🎯 模拟更真实点击
-    function humanClick(el) {
-        if (!el) return;
+    let entryClicked = false;
+    let retryCount = 0;
 
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // 🔍 检测是否打卡成功（通用版）
+    function isSuccess() {
+        const text = document.body.innerText.toLowerCase();
 
-        setTimeout(() => {
-            el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-            el.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-            el.click();
-        }, Math.random() * 800 + 200);
+        return (
+            text.includes("recorded") ||
+            text.includes("success") ||
+            text.includes("timestamp")
+        );
     }
 
     function tryClick(tag) {
 
-        // 1️⃣ 主页面
+        // ===== 状态B：新页面 =====
         let btn = document.getElementById("ess.recordTimestampButton.Label");
 
         if (btn) {
-            console.log("✅ 主页面命中");
-            humanClick(btn);
-            markDone(tag);
+            console.log("👉 点击新页面按钮");
+            btn.click();
             return true;
         }
 
-        // 2️⃣ iframe
+        // ===== 状态A：旧页面 =====
+        if (!entryClicked) {
+            const entry = document.querySelector('.related-item__btn[title="My Timestamp"]');
+            if (entry) {
+                console.log("👉 点击入口");
+                entry.click();
+                entryClicked = true;
+            }
+        }
+
         const iframes = document.querySelectorAll("iframe");
 
         for (let iframe of iframes) {
             try {
                 const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-                // iframe 入口按钮
-                const entry = document.querySelector('.related-item__btn[title="My Timestamp"]');
-                if (entry) {
-                    humanClick(entry);
-                }
-
                 const btn2 = doc.querySelector('button[title="Record Timestamp"]');
 
                 if (btn2) {
-                    console.log("✅ iframe 命中");
-                    humanClick(btn2);
-                    markDone(tag);
+                    console.log("👉 点击 iframe 按钮");
+                    btn2.click();
                     return true;
                 }
 
@@ -90,19 +94,45 @@ function startSmartTimestampBot() {
         return diff > 0 && diff < 5 * 60 * 1000;
     }
 
-    // 🔥 DOM 监听核心
+    function runWithRetry(tag) {
+
+        if (alreadyDone(tag)) return;
+
+        const clicked = tryClick(tag);
+
+        if (!clicked) {
+            console.log("⏳ 没点到，继续等...");
+            return;
+        }
+
+        // 等待结果
+        setTimeout(() => {
+
+            if (isSuccess()) {
+                console.log("🎉 打卡成功！");
+                markDone(tag);
+                return;
+            }
+
+            // ❌ 失败 → 重试
+            retryCount++;
+
+            if (retryCount <= MAX_RETRY) {
+                console.log(`🔁 重试第 ${retryCount} 次`);
+                setTimeout(() => runWithRetry(tag), 3000);
+            } else {
+                console.log("❌ 多次失败，准备刷新页面");
+                location.reload();
+            }
+
+        }, 3000);
+    }
+
     const observer = new MutationObserver(() => {
         TARGET_TIMES.forEach(t => {
 
             if (!alreadyDone(t.key) && inTimeWindow(t)) {
-
-                const success = tryClick(t.key);
-
-                if (success) {
-                    console.log("🎉 打卡完成:", t.key);
-                } else {
-                    console.log("⏳ 元素还没出现，继续监听...");
-                }
+                runWithRetry(t.key);
             }
 
         });
@@ -113,14 +143,13 @@ function startSmartTimestampBot() {
         subtree: true
     });
 
-    // 页面加载时也跑一次
     setTimeout(() => {
         TARGET_TIMES.forEach(t => {
             if (!alreadyDone(t.key) && inTimeWindow(t)) {
-                tryClick(t.key);
+                runWithRetry(t.key);
             }
         });
     }, 2000);
 
-    console.log("👀 正在监听 DOM 变化...");
+    console.log("👀 正在监听 DOM...");
 }
