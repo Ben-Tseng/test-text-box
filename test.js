@@ -153,3 +153,11 @@ function startSmartTimestampBot() {
 
     console.log("👀 正在监听 DOM...");
 }
+
+
+let btn = document.getElementById("ess.recordTimestampButton.Label");
+
+btn.disabled = false;
+btn.removeAttribute("disabled");
+
+btn.click();
