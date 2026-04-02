@@ -155,9 +155,28 @@ function startSmartTimestampBot() {
 }
 
 
-let btn = document.getElementById("ess.recordTimestampButton.Label");
+function findRecordBtn() {
+    const iframe = document.getElementById("contentPane");
 
-btn.disabled = false;
-btn.removeAttribute("disabled");
+    if (!iframe) {
+        console.log("❌ iframe 没找到");
+        return null;
+    }
 
-btn.click();
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+    if (!doc) {
+        console.log("❌ iframe 还没加载");
+        return null;
+    }
+
+    const btn = doc.getElementById("ess.recordTimestampButton.Label");
+
+    if (btn) {
+        console.log("✅ 找到 Record 按钮");
+        return btn;
+    }
+
+    console.log("❌ iframe 里也没找到按钮");
+    return null;
+}
