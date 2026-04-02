@@ -154,29 +154,30 @@ function startSmartTimestampBot() {
     console.log("👀 正在监听 DOM...");
 }
 
-
 function findRecordBtn() {
-    const iframe = document.getElementById("contentPane");
-
-    if (!iframe) {
-        console.log("❌ iframe 没找到");
-        return null;
-    }
-
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-    if (!doc) {
-        console.log("❌ iframe 还没加载");
-        return null;
-    }
-
-    const btn = doc.getElementById("ess.recordTimestampButton.Label");
-
+    // ✅ 1. 先查主页面（当前你的情况）
+    let btn = document.getElementById("ess.recordTimestampButton.Label");
     if (btn) {
-        console.log("✅ 找到 Record 按钮");
+        console.log("✅ 主页面找到按钮");
         return btn;
     }
 
-    console.log("❌ iframe 里也没找到按钮");
+    // ✅ 2. 再查 iframe（兼容旧结构）
+    const iframes = document.querySelectorAll("iframe");
+
+    for (let iframe of iframes) {
+        try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            if (!doc) continue;
+
+            const btn = doc.getElementById("ess.recordTimestampButton.Label");
+            if (btn) {
+                console.log("✅ iframe 里找到按钮");
+                return btn;
+            }
+        } catch (e) {}
+    }
+
+    console.log("❌ 哪里都没找到按钮");
     return null;
 }
