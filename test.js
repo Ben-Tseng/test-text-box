@@ -1,6 +1,6 @@
-function startUltimateTimestampBot() {
+function startUltimateAutoBot() {
 
-    console.log("🚀 Ultimate 打卡脚本启动");
+    console.log("🚀 无人值守打卡系统启动");
 
     const TARGET_TIMES = [
         { h: 7, m: 55, key: "morning" },
@@ -10,10 +10,12 @@ function startUltimateTimestampBot() {
     const MAX_RETRY = 5;
     let retryMap = {};
     let lastRun = 0;
+    let lastUrl = location.href;
+    let lastActivity = Date.now();
 
-    // ========================
-    // 工具函数
-    // ========================
+    // ======================
+    // 工具
+    // ======================
 
     function todayKey(name) {
         const d = new Date();
@@ -30,9 +32,8 @@ function startUltimateTimestampBot() {
 
     function inTimeWindow(target) {
         const now = new Date();
-        const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), target.h, target.m, 0);
-        const diff = now - t;
-        return diff > 0 && diff < 5 * 60 * 1000;
+        const t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), target.h, target.m);
+        return (now - t > 0 && now - t < 5 * 60 * 1000);
     }
 
     function shouldRun() {
@@ -42,28 +43,103 @@ function startUltimateTimestampBot() {
         return true;
     }
 
+    function incRetry(tag) {
+        retryMap[tag] = (retryMap[tag] || 0) + 1;
+    }
+
     function getRetry(tag) {
         return retryMap[tag] || 0;
     }
 
-    function incRetry(tag) {
-        retryMap[tag] = getRetry(tag) + 1;
+    function safeClick(el) {
+        if (!el) return false;
+
+        el.scrollIntoView({ block: "center" });
+        el.focus();
+
+        ["mousedown", "mouseup", "click"].forEach(type => {
+            el.dispatchEvent(new MouseEvent(type, {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            }));
+        });
+
+        lastActivity = Date.now();
+        return true;
     }
 
-    // ========================
-    // 核心：查找按钮（终极版）
-    // ========================
+    // ======================
+    // 🔥 防登出检测
+    // ======================
 
-    function findRecordBtn() {
+    function isLoggedOut() {
+        const text = document.body.innerText.toLowerCase();
 
-        // ✅ 1. 主页面
-        let btn = document.getElementById("ess.recordTimestampButton.Label");
-        if (btn) {
-            console.log("✅ 主页面找到按钮");
-            return btn;
+        return (
+            text.includes("login") ||
+            text.includes("sign in") ||
+            text.includes("session expired")
+        );
+    }
+
+    function handleLogout() {
+        console.log("🔐 检测到登出，刷新页面");
+        location.reload();
+    }
+
+    // ======================
+    // 🔥 页面恢复（回到打卡页）
+    // ======================
+
+    function ensureOnWorkPage() {
+
+        // 👉 这里你可以改成你的打卡URL关键字
+        if (!location.href.includes("timestamp")) {
+            console.log("🔄 不在打卡页，尝试刷新");
+            location.reload();
+        }
+    }
+
+    // ======================
+    // 🔥 查找并点击（双形态）
+    // ======================
+
+    function findAndClick() {
+
+        // ① 简化页面
+        let quickBtn = document.getElementById("ess.recordTimestampButton.Label");
+        if (quickBtn) {
+            console.log("⚡ 一键打卡");
+            safeClick(quickBtn);
+            return true;
         }
 
-        // ✅ 2. 所有 iframe
+        let elements = [...document.querySelectorAll("button, div, span")];
+
+        // ② My Timestamp
+        let entry = elements.find(el =>
+            el.innerText?.toLowerCase().includes("my timestamp")
+        );
+
+        if (entry) {
+            console.log("👉 点击 My Timestamp");
+            safeClick(entry);
+            return false;
+        }
+
+        // ③ Record
+        let record = elements.find(el =>
+            el.innerText?.toLowerCase().includes("record time")
+        );
+
+        if (record) {
+            console.log("👉 点击 Record");
+            safeClick(record);
+            return true;
+        }
+
+        // ④ iframe
         const iframes = document.querySelectorAll("iframe");
 
         for (let iframe of iframes) {
@@ -71,76 +147,51 @@ function startUltimateTimestampBot() {
                 const doc = iframe.contentDocument || iframe.contentWindow.document;
                 if (!doc) continue;
 
-                const btn = doc.getElementById("ess.recordTimestampButton.Label");
-                if (btn) {
-                    console.log("✅ iframe 找到按钮");
-                    return btn;
+                let quickBtn = doc.getElementById("ess.recordTimestampButton.Label");
+                if (quickBtn) {
+                    console.log("⚡ iframe 一键打卡");
+                    safeClick(quickBtn);
+                    return true;
                 }
 
             } catch (e) {}
         }
 
-        return null;
+        return false;
     }
 
-    // ========================
-    // 点击（强化版）
-    // ========================
-
-    function safeClick(btn) {
-        if (!btn) return false;
-
-        console.log("🖱️ 尝试点击按钮");
-
-        btn.scrollIntoView({ block: "center" });
-        btn.focus();
-
-        ["mousedown", "mouseup", "click"].forEach(type => {
-            btn.dispatchEvent(new MouseEvent(type, {
-                bubbles: true,
-                cancelable: true,
-                view: window
-            }));
-        });
-
-        return true;
-    }
-
-    // ========================
-    // 成功检测（加强版）
-    // ========================
+    // ======================
+    // 成功检测
+    // ======================
 
     function isSuccess() {
         const text = document.body.innerText.toLowerCase();
-
-        return (
-            text.includes("successfully") ||
-            text.includes("recorded") ||
-            text.includes("timestamp recorded")
-        );
+        return text.includes("recorded") || text.includes("success");
     }
 
-    // ========================
-    // 核心执行
-    // ========================
+    // ======================
+    // 主执行
+    // ======================
 
     function run(tag) {
 
         if (alreadyDone(tag)) return;
 
-        const btn = findRecordBtn();
-
-        if (!btn) {
-            console.log("⏳ 按钮还没出现...");
+        if (isLoggedOut()) {
+            handleLogout();
             return;
         }
 
-        safeClick(btn); // 👉 找到直接点（核心要求）
+        ensureOnWorkPage();
+
+        const done = findAndClick();
+
+        if (!done) return;
 
         setTimeout(() => {
 
             if (isSuccess()) {
-                console.log("🎉 打卡成功！");
+                console.log("🎉 打卡成功");
                 markDone(tag);
                 return;
             }
@@ -148,21 +199,44 @@ function startUltimateTimestampBot() {
             incRetry(tag);
 
             if (getRetry(tag) <= MAX_RETRY) {
-                console.log(`🔁 重试 ${getRetry(tag)} 次`);
+                console.log(`🔁 重试 ${getRetry(tag)}`);
                 setTimeout(() => run(tag), 3000);
             } else {
-                console.log("❌ 多次失败，刷新页面");
+                console.log("❌ 多次失败，刷新");
                 location.reload();
             }
 
         }, 3000);
     }
 
-    // ========================
-    // 监听 DOM（防页面切换）
-    // ========================
+    // ======================
+    // 🔥 页面卡死检测
+    // ======================
 
-    const observer = new MutationObserver(() => {
+    setInterval(() => {
+        if (Date.now() - lastActivity > 5 * 60 * 1000) {
+            console.log("💀 页面长时间无操作，刷新");
+            location.reload();
+        }
+    }, 60000);
+
+    // ======================
+    // 🔥 URL变化检测
+    // ======================
+
+    setInterval(() => {
+        if (location.href !== lastUrl) {
+            console.log("🔄 页面跳转，重置状态");
+            lastUrl = location.href;
+            lastActivity = Date.now();
+        }
+    }, 2000);
+
+    // ======================
+    // 主循环
+    // ======================
+
+    setInterval(() => {
 
         if (!shouldRun()) return;
 
@@ -172,24 +246,7 @@ function startUltimateTimestampBot() {
             }
         });
 
-    });
+    }, 3000);
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
-    // ========================
-    // 定时兜底（防 observer 失效）
-    // ========================
-
-    setInterval(() => {
-        TARGET_TIMES.forEach(t => {
-            if (!alreadyDone(t.key) && inTimeWindow(t)) {
-                run(t.key);
-            }
-        });
-    }, 5000);
-
-    console.log("👀 已进入监听模式（终极版）");
+    console.log("👀 无人值守系统已运行");
 }
