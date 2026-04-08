@@ -255,3 +255,21 @@ function startUltimateAutoBot() {
 let iframe = document.querySelector('iframe[sandbox]');
 let iframeDoc = iframe.contentDocument;
 iframeDoc.querySelector('a[href*="IpvAudit"]').click();
+
+(() => {
+  const host = document.querySelector('kat-button[label="Increase Task"]');
+  const btn = host?.shadowRoot?.querySelector('button')
+    || document.querySelector('.increase-button button');
+
+  console.log('host =', host);
+  console.log('btn =', btn);
+
+  if (!btn) {
+    console.warn('Increase Task button not found');
+    return;
+  }
+
+  btn.scrollIntoView({ block: 'center', inline: 'center' });
+  btn.click();
+  console.log('click sent');
+})();
