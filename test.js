@@ -254,4 +254,4 @@ function startUltimateAutoBot() {
 
 let iframe = document.querySelector('iframe[sandbox]');
 let iframeDoc = iframe.contentDocument;
-iframeDoc.querySelector('a.calypso-link').click();
+iframeDoc.querySelector('a[href*="IpvAudit"]').click();
