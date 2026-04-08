@@ -254,7 +254,9 @@ function startUltimateAutoBot() {
 
 let iframe = document.querySelector('iframe[sandbox]');
 let iframeDoc = iframe.contentDocument;
-iframeDoc.querySelector('a[href*="IpvAudit"]').click();
+Array.from(iframeDoc.querySelectorAll('a'))
+  .find(a => a.textContent.includes("Link for Associate's response"))
+  .click();
 
 (() => {
   const host = document.querySelector('kat-button[label="Increase Task"]');
