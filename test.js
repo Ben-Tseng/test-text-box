@@ -373,31 +373,21 @@ if (selectHeader) {
   const targetText = 'Other or Non-TAM Actionable Cases';
 
   const host = document.querySelectorAll('kat-dropdown')[3];
-  if (!host) {
-    console.log('没找到第4个 kat-dropdown');
-    return;
-  }
-
   const options = JSON.parse(host.getAttribute('options') || '[]');
   const index = options.findIndex(item => item.name === targetText);
-
-  if (index < 0) {
-    console.log('没找到目标项:', targetText, options);
-    return;
-  }
 
   const trigger =
     host.shadowRoot?.querySelector('.select-header') ||
     host.shadowRoot?.querySelector('#katal-id-10') ||
     host.shadowRoot?.querySelector('#katal-id-9');
 
-  if (!trigger) {
-    console.log('没找到 trigger');
+  if (!trigger || index < 0) {
+    console.log('没找到 trigger 或目标项', { index, options });
     return;
   }
 
-  const fireMouse = (type) => {
-    trigger.dispatchEvent(new MouseEvent(type, {
+  const fireMouse = (el, type) => {
+    el.dispatchEvent(new MouseEvent(type, {
       view: window,
       bubbles: true,
       cancelable: true,
@@ -405,8 +395,8 @@ if (selectHeader) {
     }));
   };
 
-  const fireKey = (key) => {
-    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+  const fireKey = (el, key) => {
+    el.dispatchEvent(new KeyboardEvent('keydown', {
       key,
       code: key,
       keyCode: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
@@ -418,23 +408,25 @@ if (selectHeader) {
   };
 
   trigger.focus();
-  fireMouse('pointerdown');
-  fireMouse('mousedown');
-  fireMouse('mouseup');
-  fireMouse('click');
+  fireMouse(trigger, 'pointerdown');
+  fireMouse(trigger, 'mousedown');
+  fireMouse(trigger, 'mouseup');
+  fireMouse(trigger, 'click');
 
   await sleep(300);
 
-  fireKey('Home');
+  const active = document.activeElement || trigger;
+  console.log('activeElement =', active);
+
+  fireKey(active, 'Home');
   await sleep(100);
 
   for (let i = 0; i < index; i++) {
-    fireKey('ArrowDown');
+    fireKey(active, 'ArrowDown');
     await sleep(80);
   }
 
-  fireKey('Enter');
-  console.log('已尝试选择:', targetText, 'index=', index);
+  fireKey(active, 'Enter');
 })();
 
 
@@ -448,8 +440,10 @@ if (selectHeader) {
   const index = options.findIndex(item => item.name === targetText);
   const trigger = host.shadowRoot.querySelector('.select-header');
 
-  const fireMouse = (type) => {
-    trigger.dispatchEvent(new MouseEvent(type, {
+  if (!trigger || index < 0) return console.log('初始化失败', { index });
+
+  const fireMouse = (el, type) => {
+    el.dispatchEvent(new MouseEvent(type, {
       view: window,
       bubbles: true,
       cancelable: true,
@@ -457,12 +451,12 @@ if (selectHeader) {
     }));
   };
 
-  const fireKey = (key) => {
-    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+  const fireKey = (el, key) => {
+    el.dispatchEvent(new KeyboardEvent('keydown', {
       key,
       code: key,
-      keyCode: key === 'ArrowDown' ? 40 : 13,
-      which: key === 'ArrowDown' ? 40 : 13,
+      keyCode: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
+      which: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
       bubbles: true,
       cancelable: true,
       composed: true
@@ -470,18 +464,21 @@ if (selectHeader) {
   };
 
   trigger.focus();
-  fireMouse('pointerdown');
-  fireMouse('mousedown');
-  fireMouse('mouseup');
-  fireMouse('click');
+  fireMouse(trigger, 'pointerdown');
+  fireMouse(trigger, 'mousedown');
+  fireMouse(trigger, 'mouseup');
+  fireMouse(trigger, 'click');
 
   await sleep(300);
 
-  for (let i = 0; i <= index; i++) {
-    fireKey('ArrowDown');
+  fireKey(host, 'Home');
+  await sleep(100);
+
+  for (let i = 0; i < index; i++) {
+    fireKey(host, 'ArrowDown');
     await sleep(80);
   }
 
-  fireKey('Enter');
+  fireKey(host, 'Enter');
 })();
 
