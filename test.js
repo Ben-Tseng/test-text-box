@@ -255,27 +255,6 @@ function startUltimateAutoBot() {
 
 
 
-(() => {
-  const dropdowns = document.querySelectorAll('kat-dropdown');
-  const firstDropdown = dropdowns[0];
-
-  if (!firstDropdown) {
-    console.log('没找到第一个 kat-dropdown');
-    return;
-  }
-
-  const selectHeader = firstDropdown.shadowRoot?.querySelector('.select-header');
-
-  if (!selectHeader) {
-    console.log('没找到 shadowRoot 里的 .select-header');
-    return;
-  }
-
-  selectHeader.click();
-  console.log('已点击第一个选择框');
-})();
-
-
 
 var selectHeader = document.querySelectorAll(
   'div.kat-select-container.small .select-header'
@@ -292,3 +271,78 @@ if (selectHeader) {
     });
   }, 1);
 }
+
+
+
+(() => {
+  const host = document.querySelectorAll('kat-dropdown')[3];
+  if (!host) {
+    console.log('没找到下拉框');
+    return;
+  }
+
+  host.value = '10069';
+  host.setAttribute('value', '10069');
+  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+
+  console.log('已尝试设置 value=10069', host);
+})();
+
+
+(() => {
+  const host = document.querySelectorAll('kat-dropdown')[3];
+  if (!host) {
+    console.log('没找到下拉框');
+    return;
+  }
+
+  const targetName = 'Other or Non-TAM Actionable Cases';
+  const targetValue = '10069';
+
+  host.value = targetValue;
+  host.setAttribute('value', targetValue);
+
+  const selectionText = host.shadowRoot?.querySelector('.selection-text');
+  const placeholderText = host.shadowRoot?.querySelector('.placeholder-text');
+
+  if (selectionText) {
+    selectionText.textContent = targetName;
+    selectionText.classList.remove('hidden');
+  }
+
+  if (placeholderText) {
+    placeholderText.textContent = targetName;
+  }
+
+  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+
+  console.log('已尝试强制设置', { targetName, targetValue });
+})();
+
+
+
+(() => {
+  const host = document.querySelectorAll('kat-dropdown')[3];
+  if (!host) {
+    console.log('没找到下拉框');
+    return;
+  }
+
+  const match = (host._options || []).find(x => x.name === 'Other or Non-TAM Actionable Cases');
+  if (!match) {
+    console.log('没找到目标项', host._options);
+    return;
+  }
+
+  try { host.selectOption?.(match); } catch (e) { console.log('selectOption 失败', e); }
+  try { host.setSelectedValues?.([match.value]); } catch (e) { console.log('setSelectedValues 失败', e); }
+  try { host.setSelectedItemsAsDOMValues?.([match.value]); } catch (e) { console.log('setSelectedItemsAsDOMValues 失败', e); }
+
+  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+
+  console.log('已尝试组件方法设置', match);
+})();
+
