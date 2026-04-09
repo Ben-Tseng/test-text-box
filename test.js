@@ -252,33 +252,48 @@ function startUltimateAutoBot() {
 }
 
 
-(() => {
+(async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const targetText = 'Other or Non-TAM Actionable Cases';
+
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
     document.querySelector('kat-dropdown[label="Reason category"]');
 
   if (!host) {
-    console.log('没找到 dropdown host');
+    console.log('没找到第一个下拉框 host');
     return;
   }
 
   const trigger =
-    host.shadowRoot?.querySelector('#katal-id-10') ||
-    host.shadowRoot?.querySelector('.select-header');
+    host.shadowRoot?.querySelector('.select-header') ||
+    host.shadowRoot?.querySelector('#katal-id-9') ||
+    host.shadowRoot?.querySelector('#katal-id-10');
 
   if (!trigger) {
-    console.log('没找到 shadowRoot 里的 trigger');
+    console.log('没找到 trigger');
     return;
   }
 
   trigger.click();
-  console.log('已点击 trigger:', trigger);
+  await sleep(300);
+
+  const candidates = [...document.querySelectorAll('body *')].filter((el) => {
+    const text = el.innerText?.trim();
+    if (text !== targetText) return false;
+
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+
+  if (!candidates.length) {
+    console.log('没找到目标项:', targetText);
+    return;
+  }
+
+  const option = candidates[0];
+  option.click();
+
+  console.log('已点击目标项:', option);
 })();
-
-
-const host = document.querySelector('kat-dropdown.first-column-dropdown');
-const trigger = host.shadowRoot.querySelector('#katal-id-10');
-trigger.click();
-
-
 
