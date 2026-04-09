@@ -252,105 +252,29 @@ function startUltimateAutoBot() {
 }
 
 
-
 (() => {
-  const targetText = 'Other or Non-TAM Actionable Cases';
-
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[label="Category"]');
+    document.querySelector('kat-dropdown[label="Reason category"]');
 
   if (!host) {
-    console.log('没找到第一个下拉框');
+    console.log('没找到 dropdown host');
     return;
   }
 
-  const options = Array.isArray(host._options) ? host._options : [];
-  console.log('host._options =', options);
+  const trigger =
+    host.shadowRoot?.querySelector('#katal-id-10') ||
+    host.shadowRoot?.querySelector('.select-header');
 
-  const match = options.find((item) => {
-    const texts = [
-      item?.name,
-      item?.label,
-      item?.text,
-      item?.title,
-      item?.value
-    ].filter(Boolean).map(String);
-
-    return texts.some((t) => t.trim() === targetText);
-  });
-
-  if (!match) {
-    console.log('没找到目标选项:', targetText, options);
+  if (!trigger) {
+    console.log('没找到 shadowRoot 里的 trigger');
     return;
   }
 
-  console.log('match =', match);
-
-  if (typeof host.selectOption === 'function') {
-    host.selectOption(match);
-  } else if (typeof host.setSelectedValues === 'function') {
-    host.setSelectedValues([match.value ?? match.name ?? match.label]);
-  } else {
-    host.value = match.value ?? match.name ?? match.label;
-  }
-
-  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-
-  console.log('已尝试设置为:', match);
+  trigger.click();
+  console.log('已点击 trigger:', trigger);
 })();
 
-(() => {
-  const targetText = 'Other or Non-TAM Actionable Cases';
-
-  const host =
-    document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[label="Category"]');
-
-  if (!host) {
-    console.log('没找到第一个下拉框');
-    return;
-  }
-
-  const options = Array.isArray(host._options) ? host._options : [];
-  const match = options.find((item) => {
-    const texts = [
-      item?.name,
-      item?.label,
-      item?.text,
-      item?.title,
-      item?.value
-    ].filter(Boolean).map(String);
-
-    return texts.some((t) => t.trim() === targetText);
-  });
-
-  if (!match) {
-    console.log('没找到目标选项:', targetText, options);
-    return;
-  }
-
-  const pickedValue = match.value ?? match.name ?? match.label;
-
-  try { host.selectOption?.(match); } catch (e) { console.log('selectOption 失败', e); }
-  try { host.setSelectedValues?.([pickedValue]); } catch (e) { console.log('setSelectedValues 失败', e); }
-  try { host.setSelectedItemsAsDOMValues?.([pickedValue]); } catch (e) { console.log('setSelectedItemsAsDOMValues 失败', e); }
-
-  try { host.value = pickedValue; } catch (e) {}
-  try { host.setAttribute('value', pickedValue); } catch (e) {}
-
-  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-
-  console.log('match =', match);
-  console.log('pickedValue =', pickedValue);
-})();
-
-(() => {
-  const host = document.querySelector('kat-dropdown.first-column-dropdown');
-  console.log(host?._options);
-})();
 
 
 
