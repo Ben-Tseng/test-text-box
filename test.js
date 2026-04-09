@@ -560,4 +560,155 @@ if (selectHeader) {
 })();
 
 
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const SUBJECT_TEXT = '卖家身份验证';
+  const BODY_TEXT = '这里先放测试正文';
+  const CATEGORY_VALUE = '10069';
+  const REASON_TEXT = 'Other - No Applicable Reason Code';
+
+  function fillTextInput(element, value) {
+    if (!element) return false;
+    element.focus();
+    element.value = value;
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+
+  function fillShadowInput(host, value) {
+    const input =
+      host?.shadowRoot?.querySelector('input') ||
+      host?.shadowRoot?.querySelector('#katal-id-7');
+
+    if (!input) return false;
+
+    input.focus();
+    input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event('blur', { bubbles: true, composed: true }));
+    return true;
+  }
+
+  function fillSubject(value) {
+    const host =
+      document.querySelector('kat-input#createCaseInput') ||
+      document.querySelector('#subject-input-group kat-input');
+
+    if (fillShadowInput(host, value)) return true;
+
+    return (
+      fillTextInput(document.getElementById('katal-id-7'), value) ||
+      fillTextInput(document.getElementById('katal-id-6'), value)
+    );
+  }
+
+  function clickDropdownTrigger(host) {
+    const trigger =
+      host?.shadowRoot?.querySelector('.select-header') ||
+      host?.shadowRoot?.querySelector('[id^="katal-id-"]');
+
+    if (!trigger) return false;
+
+    const fireMouse = (type) => {
+      trigger.dispatchEvent(new MouseEvent(type, {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      }));
+    };
+
+    trigger.focus();
+    fireMouse('pointerdown');
+    fireMouse('mousedown');
+    fireMouse('mouseup');
+    fireMouse('click');
+    return true;
+  }
+
+  async function chooseDropdownOption(host, targetValue) {
+    if (!host || !clickDropdownTrigger(host)) return false;
+
+    await sleep(250);
+
+    const shadow = host.shadowRoot;
+    const option =
+      shadow?.querySelector(`kat-option[value="${targetValue}"]`) ||
+      [...(shadow?.querySelectorAll('kat-option') || [])].find(
+        (node) => node.getAttribute('value') === String(targetValue)
+      );
+
+    if (!option) {
+      console.log(
+        '没找到 option',
+        targetValue,
+        [...(shadow?.querySelectorAll('kat-option') || [])].map(node => ({
+          value: node.getAttribute('value'),
+          text: node.innerText?.trim(),
+          title: node.getAttribute('title')
+        }))
+      );
+      return false;
+    }
+
+    option.click();
+    option.dispatchEvent(new MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+
+    return true;
+  }
+
+  console.log('1. 填主题');
+  const subjectOk = fillSubject(SUBJECT_TEXT);
+  console.log('主题结果 =', subjectOk);
+
+  console.log('2. 填正文');
+  const bodyOk = fillTextInput(document.querySelector('textarea'), BODY_TEXT);
+  console.log('正文结果 =', bodyOk);
+
+  console.log('3. 选择第一个下拉框');
+  const dropdowns = [...document.querySelectorAll('kat-dropdown')];
+  const categoryDropdown =
+    dropdowns.find(node => node.getAttribute('label') === 'Reason category') ||
+    dropdowns[3];
+
+  const firstOk = await chooseDropdownOption(categoryDropdown, CATEGORY_VALUE);
+  console.log('第一个下拉结果 =', firstOk);
+
+  console.log('4. 等第二个下拉框出现');
+  await sleep(1000);
+
+  const refreshed = [...document.querySelectorAll('kat-dropdown')];
+  const reasonDropdown =
+    refreshed.find(node => node.getAttribute('label') === 'Reason code') ||
+    refreshed[4];
+
+  if (!reasonDropdown) {
+    console.log('没找到第二个下拉框');
+    return;
+  }
+
+  const reasonOptions = JSON.parse(reasonDropdown.getAttribute('options') || '[]');
+  const matchedReason = reasonOptions.find(item => item.name === REASON_TEXT);
+
+  if (!matchedReason) {
+    console.log('没找到第二个下拉目标项', REASON_TEXT, reasonOptions);
+    return;
+  }
+
+  console.log('5. 选择第二个下拉框');
+  const secondOk = await chooseDropdownOption(reasonDropdown, String(matchedReason.value));
+  console.log('第二个下拉结果 =', secondOk, matchedReason);
+
+  console.log('测试结束');
+})();
+
+
 
