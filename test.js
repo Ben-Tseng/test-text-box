@@ -252,26 +252,34 @@ function startUltimateAutoBot() {
 }
 
 
-let iframe = document.querySelector('iframe[sandbox]');
-let iframeDoc = iframe.contentDocument;
-Array.from(iframeDoc.querySelectorAll('a'))
-  .find(a => a.textContent.includes("Link for Associate's response"))
-  .click();
-
 (() => {
-  const host = document.querySelector('kat-button[label="Increase Task"]');
-  const btn = host?.shadowRoot?.querySelector('button')
-    || document.querySelector('.increase-button button');
+  const host =
+    document.querySelector('kat-input#createCaseInput') ||
+    document.querySelector('#subject-input-group kat-input');
 
-  console.log('host =', host);
-  console.log('btn =', btn);
-
-  if (!btn) {
-    console.warn('Increase Task button not found');
+  if (!host) {
+    console.log('没找到 kat-input 宿主元素');
     return;
   }
 
-  btn.scrollIntoView({ block: 'center', inline: 'center' });
-  btn.click();
-  console.log('click sent');
+  const input =
+    host.shadowRoot?.querySelector('input') ||
+    host.shadowRoot?.querySelector('#katal-id-7');
+
+  if (!input) {
+    console.log('没找到 shadowRoot 里的 input');
+    return;
+  }
+
+  const value = '卖家身份验证';
+
+  input.focus();
+  input.value = value;
+
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  input.dispatchEvent(new Event('blur', { bubbles: true, composed: true }));
+
+  console.log('已写入:', input.value, input);
 })();
+
