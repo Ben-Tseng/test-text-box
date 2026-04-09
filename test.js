@@ -458,3 +458,101 @@ if (selectHeader) {
 })();
 
 
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetText = 'Other - No Applicable Reason Code';
+
+  const host = document.querySelectorAll('kat-dropdown')[4];
+  if (!host) {
+    console.log('没找到第5个 kat-dropdown');
+    return;
+  }
+
+  const shadow = host.shadowRoot;
+  const trigger =
+    shadow?.querySelector('.select-header') ||
+    shadow?.querySelector('[id^="katal-id-"]');
+
+  if (!shadow || !trigger) {
+    console.log('没找到第二个选择框 trigger');
+    return;
+  }
+
+  trigger.click();
+  await sleep(200);
+
+  const option = [...shadow.querySelectorAll('kat-option')].find(el =>
+    el.innerText?.trim() === targetText ||
+    el.textContent?.trim() === targetText ||
+    el.getAttribute('title') === targetText
+  );
+
+  if (!option) {
+    console.log(
+      '没找到目标项',
+      targetText,
+      [...shadow.querySelectorAll('kat-option')].map(el => ({
+        text: el.innerText?.trim(),
+        textContent: el.textContent?.trim(),
+        value: el.getAttribute('value')
+      }))
+    );
+    return;
+  }
+
+  option.click();
+  option.dispatchEvent(new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    composed: true
+  }));
+
+  console.log('已点击第二个选项:', option);
+})();
+
+
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetText = 'Other - No Applicable Reason Code';
+
+  const dropdowns = [...document.querySelectorAll('kat-dropdown')];
+  const host = dropdowns[dropdowns.length - 1];
+
+  if (!host) {
+    console.log('没找到第二个选择框 host');
+    return;
+  }
+
+  const shadow = host.shadowRoot;
+  const trigger = shadow?.querySelector('.select-header');
+
+  if (!shadow || !trigger) {
+    console.log('没找到第二个选择框 trigger');
+    return;
+  }
+
+  trigger.click();
+  await sleep(200);
+
+  const option = [...shadow.querySelectorAll('kat-option')].find(el =>
+    el.innerText?.trim() === targetText ||
+    el.textContent?.trim() === targetText
+  );
+
+  if (!option) {
+    console.log(
+      '没找到目标项',
+      [...shadow.querySelectorAll('kat-option')].map(el => ({
+        text: el.innerText?.trim(),
+        value: el.getAttribute('value')
+      }))
+    );
+    return;
+  }
+
+  option.click();
+  console.log('已点击:', option);
+})();
+
+
+
