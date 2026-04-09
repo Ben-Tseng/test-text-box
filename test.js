@@ -252,55 +252,59 @@ function startUltimateAutoBot() {
 }
 
 
-(() => {
-  const targetName = 'Other or Non-TAM Actionable Cases';
 
+(() => {
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
     document.querySelector('kat-dropdown[label="Category"]');
 
   if (!host) {
-    console.log('没找到第一个下拉框');
+    console.log('没找到 dropdown');
     return;
   }
 
-  const rawOptions = host.getAttribute('options') || '[]';
-  let options = [];
+  const keys = Object.keys(host).sort();
+  console.log('host =', host);
+  console.log('keys =', keys);
 
-  try {
-    options = JSON.parse(rawOptions);
-  } catch (err) {
-    console.log('options 解析失败', err, rawOptions);
-    return;
+  const interesting = {};
+  for (const key of keys) {
+    const val = host[key];
+    if (
+      key.toLowerCase().includes('option') ||
+      key.toLowerCase().includes('value') ||
+      key.toLowerCase().includes('select') ||
+      key.toLowerCase().includes('item')
+    ) {
+      interesting[key] = val;
+    }
   }
 
-  const match = options.find(item => item.name === targetName);
-
-  if (!match) {
-    console.log('没找到目标选项', targetName, options);
-    return;
-  }
-
-  host.value = match.value;
-  host.setAttribute('value', match.value);
-
-  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-
-  console.log('已设置', {
-    name: match.name,
-    value: match.value,
-    currentValueProp: host.value,
-    currentValueAttr: host.getAttribute('value')
-  });
+  console.log('interesting =', interesting);
 })();
 
 (() => {
-  const host =
-    document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[label="Category"]');
+  const host = document.querySelector('kat-dropdown.first-column-dropdown');
+  if (!host) return console.log('没找到 host');
 
-  console.log(JSON.parse(host?.getAttribute('options') || '[]'));
+  console.log('host.options =', host.options);
+  console.log('host.value =', host.value);
+  console.log('host.selected =', host.selected);
+  console.log('host.selectedOptions =', host.selectedOptions);
+  console.log('host.items =', host.items);
+  console.log('host.data =', host.data);
+})();
+
+(() => {
+  const host = document.querySelector('kat-dropdown.first-column-dropdown');
+  if (!host) return console.log('没找到 host');
+
+  const proto = Object.getPrototypeOf(host);
+  const methods = Object.getOwnPropertyNames(proto).filter(
+    k => typeof host[k] === 'function'
+  );
+
+  console.log('methods =', methods);
 })();
 
 
