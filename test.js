@@ -253,116 +253,56 @@ function startUltimateAutoBot() {
 
 
 (() => {
-  const host =
-    document.querySelector('kat-input#createCaseInput') ||
-    document.querySelector('#subject-input-group kat-input');
-
-  if (!host) {
-    console.log('没找到 kat-input 宿主元素');
-    return;
-  }
-
-  const input =
-    host.shadowRoot?.querySelector('input') ||
-    host.shadowRoot?.querySelector('#katal-id-7');
-
-  if (!input) {
-    console.log('没找到 shadowRoot 里的 input');
-    return;
-  }
-
-  const value = '卖家身份验证';
-
-  input.focus();
-  input.value = value;
-
-  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-  input.dispatchEvent(new Event('blur', { bubbles: true, composed: true }));
-
-  console.log('已写入:', input.value, input);
-})();
-
-
-(async () => {
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetName = 'Other or Non-TAM Actionable Cases';
 
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[placeholder="Please select an option."]');
+    document.querySelector('kat-dropdown[label="Category"]');
 
   if (!host) {
-    console.log('没找到 kat-dropdown');
+    console.log('没找到第一个下拉框');
     return;
   }
 
-  const shadow = host.shadowRoot;
-  if (!shadow) {
-    console.log('没找到 shadowRoot');
+  const rawOptions = host.getAttribute('options') || '[]';
+  let options = [];
+
+  try {
+    options = JSON.parse(rawOptions);
+  } catch (err) {
+    console.log('options 解析失败', err, rawOptions);
     return;
   }
 
-  const trigger =
-    shadow.querySelector('.select-header') ||
-    shadow.querySelector('[part="dropdown-header"]') ||
-    shadow.querySelector('[id^="katal-id-"]');
+  const match = options.find(item => item.name === targetName);
 
-  if (!trigger) {
-    console.log('没找到 trigger');
+  if (!match) {
+    console.log('没找到目标选项', targetName, options);
     return;
   }
 
-  const fire = (el, type) => {
-    el.dispatchEvent(new MouseEvent(type, {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-      composed: true
-    }));
-  };
+  host.value = match.value;
+  host.setAttribute('value', match.value);
 
-  trigger.focus();
-  fire(trigger, 'pointerdown');
-  fire(trigger, 'mousedown');
-  fire(trigger, 'mouseup');
-  fire(trigger, 'click');
+  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
 
-  await sleep(500);
-
-  const docOptions = [
-    ...document.querySelectorAll('.select-options div'),
-    ...document.querySelectorAll('[role="option"]'),
-    ...document.querySelectorAll('kat-option'),
-    ...document.querySelectorAll('li')
-  ].filter(el => el.innerText?.trim());
-
-  const shadowOptions = [
-    ...shadow.querySelectorAll('.select-options div'),
-    ...shadow.querySelectorAll('[role="option"]'),
-    ...shadow.querySelectorAll('kat-option'),
-    ...shadow.querySelectorAll('li'),
-    ...shadow.querySelectorAll('*')
-  ].filter(el => el.innerText?.trim());
-
-  console.log('trigger =', trigger);
-  console.log('document options =', docOptions.map(el => el.innerText.trim()));
-  console.log('shadow options =', shadowOptions.map(el => el.innerText.trim()));
+  console.log('已设置', {
+    name: match.name,
+    value: match.value,
+    currentValueProp: host.value,
+    currentValueAttr: host.getAttribute('value')
+  });
 })();
 
 (() => {
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[placeholder="Please select an option."]');
+    document.querySelector('kat-dropdown[label="Category"]');
 
-  if (!host) {
-    console.log('没找到 kat-dropdown');
-    return;
-  }
-
-  console.log('host =', host);
-  console.log('attributes =', [...host.attributes].map(a => [a.name, a.value]));
-  console.log('shadow html =', host.shadowRoot?.innerHTML);
+  console.log(JSON.parse(host?.getAttribute('options') || '[]'));
 })();
+
 
 
 
