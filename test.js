@@ -366,119 +366,95 @@ if (selectHeader) {
   console.log('已尝试按第 9 项选择');
 })();
 
-
-
 (async () => {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const targetText = 'Other or Non-TAM Actionable Cases';
+  const targetValue = '10069';
 
   const host = document.querySelectorAll('kat-dropdown')[3];
-  const options = JSON.parse(host.getAttribute('options') || '[]');
-  const index = options.findIndex(item => item.name === targetText);
-
-  const trigger =
-    host.shadowRoot?.querySelector('.select-header') ||
-    host.shadowRoot?.querySelector('#katal-id-10') ||
-    host.shadowRoot?.querySelector('#katal-id-9');
-
-  if (!trigger || index < 0) {
-    console.log('没找到 trigger 或目标项', { index, options });
+  if (!host) {
+    console.log('没找到第4个 kat-dropdown');
     return;
   }
 
-  const fireMouse = (el, type) => {
-    el.dispatchEvent(new MouseEvent(type, {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-      composed: true
-    }));
-  };
+  const shadow = host.shadowRoot;
+  const trigger =
+    shadow?.querySelector('.select-header') ||
+    shadow?.querySelector('#katal-id-10') ||
+    shadow?.querySelector('#katal-id-11') ||
+    shadow?.querySelector('#katal-id-9');
 
-  const fireKey = (el, key) => {
-    el.dispatchEvent(new KeyboardEvent('keydown', {
-      key,
-      code: key,
-      keyCode: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
-      which: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
-      bubbles: true,
-      cancelable: true,
-      composed: true
-    }));
-  };
-
-  trigger.focus();
-  fireMouse(trigger, 'pointerdown');
-  fireMouse(trigger, 'mousedown');
-  fireMouse(trigger, 'mouseup');
-  fireMouse(trigger, 'click');
-
-  await sleep(300);
-
-  const active = document.activeElement || trigger;
-  console.log('activeElement =', active);
-
-  fireKey(active, 'Home');
-  await sleep(100);
-
-  for (let i = 0; i < index; i++) {
-    fireKey(active, 'ArrowDown');
-    await sleep(80);
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
   }
 
-  fireKey(active, 'Enter');
+  trigger.click();
+  await sleep(200);
+
+  const option =
+    shadow?.querySelector(`kat-option[value="${targetValue}"]`) ||
+    [...shadow.querySelectorAll('kat-option')].find(
+      el => el.getAttribute('value') === targetValue
+    );
+
+  if (!option) {
+    console.log(
+      '没找到目标 option',
+      targetValue,
+      [...shadow.querySelectorAll('kat-option')].map(el => ({
+        value: el.getAttribute('value'),
+        text: el.innerText?.trim()
+      }))
+    );
+    return;
+  }
+
+  option.click();
+  option.dispatchEvent(new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    composed: true
+  }));
+
+  console.log('已点击 option:', option);
 })();
-
-
 
 (async () => {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const targetText = 'Other or Non-TAM Actionable Cases';
 
   const host = document.querySelectorAll('kat-dropdown')[3];
-  const options = JSON.parse(host.getAttribute('options') || '[]');
-  const index = options.findIndex(item => item.name === targetText);
-  const trigger = host.shadowRoot.querySelector('.select-header');
+  const shadow = host?.shadowRoot;
+  const trigger = shadow?.querySelector('.select-header');
 
-  if (!trigger || index < 0) return console.log('初始化失败', { index });
-
-  const fireMouse = (el, type) => {
-    el.dispatchEvent(new MouseEvent(type, {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-      composed: true
-    }));
-  };
-
-  const fireKey = (el, key) => {
-    el.dispatchEvent(new KeyboardEvent('keydown', {
-      key,
-      code: key,
-      keyCode: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
-      which: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
-      bubbles: true,
-      cancelable: true,
-      composed: true
-    }));
-  };
-
-  trigger.focus();
-  fireMouse(trigger, 'pointerdown');
-  fireMouse(trigger, 'mousedown');
-  fireMouse(trigger, 'mouseup');
-  fireMouse(trigger, 'click');
-
-  await sleep(300);
-
-  fireKey(host, 'Home');
-  await sleep(100);
-
-  for (let i = 0; i < index; i++) {
-    fireKey(host, 'ArrowDown');
-    await sleep(80);
+  if (!host || !shadow || !trigger) {
+    console.log('初始化失败');
+    return;
   }
 
-  fireKey(host, 'Enter');
+  trigger.click();
+  await sleep(200);
+
+  const option = [...shadow.querySelectorAll('kat-option')].find(el =>
+    el.innerText?.trim() === targetText ||
+    el.textContent?.trim() === targetText ||
+    el.getAttribute('title') === targetText
+  );
+
+  if (!option) {
+    console.log(
+      '没找到目标项',
+      [...shadow.querySelectorAll('kat-option')].map(el => ({
+        text: el.innerText?.trim(),
+        textContent: el.textContent?.trim(),
+        value: el.getAttribute('value')
+      }))
+    );
+    return;
+  }
+
+  option.click();
+  console.log('已点击:', option);
 })();
+
 
