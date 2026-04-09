@@ -252,85 +252,29 @@ function startUltimateAutoBot() {
 }
 
 
-(async () => {
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  const host =
-    document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[label="Reason category"]');
 
-  const trigger =
-    host?.shadowRoot?.querySelector('.select-header') ||
-    host?.shadowRoot?.querySelector('#katal-id-9') ||
-    host?.shadowRoot?.querySelector('#katal-id-10');
 
-  if (!trigger) {
-    console.log('没找到 trigger');
+(() => {
+  const dropdowns = document.querySelectorAll('kat-dropdown');
+  const firstDropdown = dropdowns[0];
+
+  if (!firstDropdown) {
+    console.log('没找到第一个 kat-dropdown');
     return;
   }
 
-  trigger.click();
-  await sleep(500);
+  const selectHeader = firstDropdown.shadowRoot?.querySelector('.select-header');
 
-  const visible = [...document.querySelectorAll('body *')]
-    .map(el => ({
-      text: el.innerText?.trim(),
-      tag: el.tagName,
-      cls: el.className,
-      id: el.id
-    }))
-    .filter(x => x.text)
-    .filter(x =>
-      x.text.includes('Account') ||
-      x.text.includes('Product') ||
-      x.text.includes('Shipping') ||
-      x.text.includes('Other') ||
-      x.text.includes('Cases')
-    );
-
-  console.log(visible);
-})();
-
-
-
-(async () => {
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-  const host =
-    document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('kat-dropdown[label="Reason category"]');
-
-  const trigger =
-    host?.shadowRoot?.querySelector('.select-header') ||
-    host?.shadowRoot?.querySelector('#katal-id-9') ||
-    host?.shadowRoot?.querySelector('#katal-id-10');
-
-  if (!trigger) {
-    console.log('没找到 trigger');
+  if (!selectHeader) {
+    console.log('没找到 shadowRoot 里的 .select-header');
     return;
   }
 
-  trigger.click();
-  await sleep(500);
-
-  const visible = [...document.querySelectorAll('body *')]
-    .map(el => ({
-      text: el.innerText?.trim(),
-      tag: el.tagName,
-      cls: el.className,
-      id: el.id
-    }))
-    .filter(x => x.text)
-    .filter(x =>
-      x.text.includes('Account') ||
-      x.text.includes('Product') ||
-      x.text.includes('Shipping') ||
-      x.text.includes('Other') ||
-      x.text.includes('Cases')
-    );
-
-  console.log(visible);
+  selectHeader.click();
+  console.log('已点击第一个选择框');
 })();
+
 
 
 var selectHeader = document.querySelectorAll(
