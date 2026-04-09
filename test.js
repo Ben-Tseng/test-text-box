@@ -286,32 +286,20 @@ function startUltimateAutoBot() {
 
 
 (() => {
-  const targetText = 'Other or Non-TAM Actionable Cases';
+  const host = document.querySelector('kat-dropdown.first-column-dropdown');
+  console.log('host =', host);
 
-  const host =
-    document.querySelector('kat-dropdown.first-column-dropdown') ||
-    document.querySelector('.katal.flo-mapped-dropdown-container kat-dropdown');
-
-  if (!host) {
-    console.log('没找到第一个 kat-dropdown');
-    return;
-  }
-
-  const shadow = host.shadowRoot;
-  if (!shadow) {
-    console.log('这个下拉没有 open shadowRoot');
-    return;
-  }
+  const shadow = host?.shadowRoot;
+  console.log('shadow =', shadow);
 
   const trigger =
-    shadow.querySelector('.select-header') ||
-    shadow.querySelector('[part="dropdown-header"]') ||
-    shadow.querySelector('#katal-id-10');
+    shadow?.querySelector('.select-header') ||
+    shadow?.querySelector('[part="dropdown-header"]') ||
+    shadow?.querySelector('#katal-id-10');
 
-  if (!trigger) {
-    console.log('没找到下拉触发区域');
-    return;
-  }
+  console.log('trigger =', trigger);
+
+  if (!trigger) return;
 
   trigger.click();
 
@@ -323,15 +311,9 @@ function startUltimateAutoBot() {
       ...document.querySelectorAll('li')
     ];
 
-    const match = options.find(el => el.innerText && el.innerText.trim() === targetText);
-
-    if (!match) {
-      console.log('没找到目标选项', targetText, options.map(el => el.innerText?.trim()).filter(Boolean));
-      return;
-    }
-
-    match.click();
-    console.log('已点击:', targetText, match);
-  }, 300);
+    console.log('options =', options);
+    console.log('texts =', options.map(el => el.innerText?.trim()).filter(Boolean));
+  }, 500);
 })();
+
 
