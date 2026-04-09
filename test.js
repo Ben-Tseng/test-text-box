@@ -252,49 +252,109 @@ function startUltimateAutoBot() {
 }
 
 
-
 (async () => {
-  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-  const targetText = 'Other or Non-TAM Actionable Cases';
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
     document.querySelector('kat-dropdown[label="Reason category"]');
 
-  if (!host) {
-    console.log('没找到第一个下拉框 host');
-    return;
-  }
-
   const trigger =
-    host.shadowRoot?.querySelector('.select-header') ||
-    host.shadowRoot?.querySelector('#katal-id-9') ||
-    host.shadowRoot?.querySelector('#katal-id-10');
+    host?.shadowRoot?.querySelector('.select-header') ||
+    host?.shadowRoot?.querySelector('#katal-id-9') ||
+    host?.shadowRoot?.querySelector('#katal-id-10');
 
   if (!trigger) {
-    console.log('没找到下拉框 trigger');
+    console.log('没找到 trigger');
     return;
   }
 
   trigger.click();
-  await sleep(300);
+  await sleep(500);
 
-  const candidates = [...document.querySelectorAll('body *')].filter((el) => {
-    const text = el.innerText?.trim();
-    return text === targetText;
-  });
+  const visible = [...document.querySelectorAll('body *')]
+    .map(el => ({
+      text: el.innerText?.trim(),
+      tag: el.tagName,
+      cls: el.className,
+      id: el.id
+    }))
+    .filter(x => x.text)
+    .filter(x =>
+      x.text.includes('Account') ||
+      x.text.includes('Product') ||
+      x.text.includes('Shipping') ||
+      x.text.includes('Other') ||
+      x.text.includes('Cases')
+    );
 
-  const option = candidates.find((el) => {
-    const rect = el.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
-  });
+  console.log(visible);
+})();
 
-  if (!option) {
-    console.log('没找到目标选项:', targetText, candidates);
+
+
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const host =
+    document.querySelector('kat-dropdown.first-column-dropdown') ||
+    document.querySelector('kat-dropdown[label="Reason category"]');
+
+  const trigger =
+    host?.shadowRoot?.querySelector('.select-header') ||
+    host?.shadowRoot?.querySelector('#katal-id-9') ||
+    host?.shadowRoot?.querySelector('#katal-id-10');
+
+  if (!trigger) {
+    console.log('没找到 trigger');
     return;
   }
 
-  option.click();
-  console.log('已选中:', targetText, option);
+  trigger.click();
+  await sleep(500);
+
+  const visible = [...document.querySelectorAll('body *')]
+    .map(el => ({
+      text: el.innerText?.trim(),
+      tag: el.tagName,
+      cls: el.className,
+      id: el.id
+    }))
+    .filter(x => x.text)
+    .filter(x =>
+      x.text.includes('Account') ||
+      x.text.includes('Product') ||
+      x.text.includes('Shipping') ||
+      x.text.includes('Other') ||
+      x.text.includes('Cases')
+    );
+
+  console.log(visible);
+})();
+
+
+
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const host = document.querySelector('kat-dropdown.first-column-dropdown');
+  const trigger =
+    host?.shadowRoot?.querySelector('.select-header') ||
+    host?.shadowRoot?.querySelector('#katal-id-9') ||
+    host?.shadowRoot?.querySelector('#katal-id-10');
+
+  trigger?.click();
+  await sleep(500);
+
+  const inside = [...host.shadowRoot.querySelectorAll('*')]
+    .map(el => ({
+      text: el.innerText?.trim(),
+      tag: el.tagName,
+      cls: el.className,
+      id: el.id
+    }))
+    .filter(x => x.text);
+
+  console.log(inside);
 })();
 
