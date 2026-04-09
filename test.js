@@ -284,36 +284,85 @@ function startUltimateAutoBot() {
 })();
 
 
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-(() => {
-  const host = document.querySelector('kat-dropdown.first-column-dropdown');
-  console.log('host =', host);
+  const host =
+    document.querySelector('kat-dropdown.first-column-dropdown') ||
+    document.querySelector('kat-dropdown[placeholder="Please select an option."]');
 
-  const shadow = host?.shadowRoot;
-  console.log('shadow =', shadow);
+  if (!host) {
+    console.log('没找到 kat-dropdown');
+    return;
+  }
+
+  const shadow = host.shadowRoot;
+  if (!shadow) {
+    console.log('没找到 shadowRoot');
+    return;
+  }
 
   const trigger =
-    shadow?.querySelector('.select-header') ||
-    shadow?.querySelector('[part="dropdown-header"]') ||
-    shadow?.querySelector('#katal-id-10');
+    shadow.querySelector('.select-header') ||
+    shadow.querySelector('[part="dropdown-header"]') ||
+    shadow.querySelector('[id^="katal-id-"]');
+
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
+  }
+
+  const fire = (el, type) => {
+    el.dispatchEvent(new MouseEvent(type, {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  trigger.focus();
+  fire(trigger, 'pointerdown');
+  fire(trigger, 'mousedown');
+  fire(trigger, 'mouseup');
+  fire(trigger, 'click');
+
+  await sleep(500);
+
+  const docOptions = [
+    ...document.querySelectorAll('.select-options div'),
+    ...document.querySelectorAll('[role="option"]'),
+    ...document.querySelectorAll('kat-option'),
+    ...document.querySelectorAll('li')
+  ].filter(el => el.innerText?.trim());
+
+  const shadowOptions = [
+    ...shadow.querySelectorAll('.select-options div'),
+    ...shadow.querySelectorAll('[role="option"]'),
+    ...shadow.querySelectorAll('kat-option'),
+    ...shadow.querySelectorAll('li'),
+    ...shadow.querySelectorAll('*')
+  ].filter(el => el.innerText?.trim());
 
   console.log('trigger =', trigger);
-
-  if (!trigger) return;
-
-  trigger.click();
-
-  setTimeout(() => {
-    const options = [
-      ...document.querySelectorAll('.select-options div'),
-      ...document.querySelectorAll('[role="option"]'),
-      ...document.querySelectorAll('kat-option'),
-      ...document.querySelectorAll('li')
-    ];
-
-    console.log('options =', options);
-    console.log('texts =', options.map(el => el.innerText?.trim()).filter(Boolean));
-  }, 500);
+  console.log('document options =', docOptions.map(el => el.innerText.trim()));
+  console.log('shadow options =', shadowOptions.map(el => el.innerText.trim()));
 })();
+
+(() => {
+  const host =
+    document.querySelector('kat-dropdown.first-column-dropdown') ||
+    document.querySelector('kat-dropdown[placeholder="Please select an option."]');
+
+  if (!host) {
+    console.log('没找到 kat-dropdown');
+    return;
+  }
+
+  console.log('host =', host);
+  console.log('attributes =', [...host.attributes].map(a => [a.name, a.value]));
+  console.log('shadow html =', host.shadowRoot?.innerHTML);
+})();
+
 
 
