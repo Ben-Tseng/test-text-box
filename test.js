@@ -252,8 +252,9 @@ function startUltimateAutoBot() {
 }
 
 
+
 (async () => {
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   const targetText = 'Other or Non-TAM Actionable Cases';
 
   const host =
@@ -271,7 +272,7 @@ function startUltimateAutoBot() {
     host.shadowRoot?.querySelector('#katal-id-10');
 
   if (!trigger) {
-    console.log('没找到 trigger');
+    console.log('没找到下拉框 trigger');
     return;
   }
 
@@ -280,20 +281,20 @@ function startUltimateAutoBot() {
 
   const candidates = [...document.querySelectorAll('body *')].filter((el) => {
     const text = el.innerText?.trim();
-    if (text !== targetText) return false;
+    return text === targetText;
+  });
 
+  const option = candidates.find((el) => {
     const rect = el.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   });
 
-  if (!candidates.length) {
-    console.log('没找到目标项:', targetText);
+  if (!option) {
+    console.log('没找到目标选项:', targetText, candidates);
     return;
   }
 
-  const option = candidates[0];
   option.click();
-
-  console.log('已点击目标项:', option);
+  console.log('已选中:', targetText, option);
 })();
 
