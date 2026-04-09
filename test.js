@@ -712,3 +712,68 @@ if (selectHeader) {
 
 
 
+(() => {
+  const radio =
+    document.querySelector('input[name="caseStatusRadioGroup"][value="RS"]') ||
+    document.querySelector('input[aria-label="Resolved"]');
+
+  if (!radio) {
+    console.log('没找到 Resolved 对应的 radio');
+    return;
+  }
+
+  radio.checked = true;
+  radio.click();
+  radio.dispatchEvent(new Event('input', { bubbles: true }));
+  radio.dispatchEvent(new Event('change', { bubbles: true }));
+
+  console.log('已尝试选中 Resolved', radio);
+})();
+
+
+(() => {
+  const labelText = [...document.querySelectorAll('span[part="label-text"]')]
+    .find(el => el.textContent?.trim() === 'Resolved');
+
+  const label = labelText?.closest('label');
+
+  if (!label) {
+    console.log('没找到 Resolved 的 label');
+    return;
+  }
+
+  label.click();
+  console.log('已点击 Resolved 的 label', label);
+})();
+
+
+(() => {
+  const radio =
+    document.querySelector('input[name="caseStatusRadioGroup"][value="RS"]') ||
+    document.querySelector('input[aria-label="Resolved"]');
+
+  if (!radio) {
+    console.log('没找到 Resolved 对应的 radio');
+    return;
+  }
+
+  const label = document.querySelector(`label[for="${radio.id}"]`);
+
+  if (label) {
+    label.click();
+  } else {
+    radio.checked = true;
+    radio.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+    radio.dispatchEvent(new Event('input', { bubbles: true }));
+    radio.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  console.log('已尝试选中 Resolved', { radio, label });
+})();
+
+
+
