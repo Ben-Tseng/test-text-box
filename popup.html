@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blurb Autobot</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="modal-card">
+        <div id="templateList" class="template-list"></div>
+
+        <div class="toolbar">
+          <button id="addTemplate" type="button">+</button>
+          <button id="exportTemplates" type="button">↑</button>
+          <button id="importTemplates" type="button">↓</button>
+          <button id="closePopup" type="button">x</button>
+        </div>
+
+        <input id="importFileInput" type="file" accept="application/json,.json" hidden>
+
+        <p class="usage-tip">点模板名或左侧 + 应用，# 编辑，- 删除，顶部 + 新建。</p>
+        <p class="shortcut-tip">快捷键：`Alt+Shift+M`</p>
+        <p id="statusMessage" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <div id="editorModal" class="editor-modal" hidden>
+        <div class="editor-dialog">
+          <h3 id="editorTitle" class="editor-title">编辑模板</h3>
+          <div class="field">
+            <label for="templateName">模板名称：</label>
+            <input id="templateName" type="text" placeholder="请输入模板名称">
+          </div>
+          <div class="field">
+            <label for="templateContent">模板内容：</label>
+            <textarea id="templateContent" rows="10" placeholder="请输入模板内容"></textarea>
+          </div>
+          <div class="editor-actions">
+            <button id="saveTemplate" type="button">+</button>
+            <button id="cancelEdit" type="button">x</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="miniModal" class="editor-modal" hidden>
+        <div class="mini-dialog">
+          <h3 id="miniModalTitle" class="editor-title">操作</h3>
+          <p id="miniModalText" class="mini-text"></p>
+          <div id="miniModalField" class="field" hidden>
+            <label for="miniModalInput">模板名称：</label>
+            <input id="miniModalInput" type="text" placeholder="请输入模板名称">
+          </div>
+          <div class="editor-actions">
+            <button id="miniModalConfirm" type="button">+</button>
+            <button id="miniModalCancel" type="button">x</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

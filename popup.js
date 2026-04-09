@@ -1,0 +1,596 @@
+const STORAGE_KEY = "blurb_templates";
+const SUBJECT_TEXT = "卖家身份验证";
+const REASON_TEXT = "Other - No Applicable Reason Code";
+
+const encodedDefaultTemplates = {
+  "%E6%A8%A1%E6%9D%BF1": "%E6%82%A8%E5%A5%BD%EF%BC%81\n\n%E6%88%91%E4%BB%AC%E5%B7%B2%E5%AE%A1%E6%A0%B8%E6%82%A8%E6%8F%90%E4%BE%9B%E7%9A%84%E6%96%87%E4%BB%B6%EF%BC%8C%E4%BD%86%E6%97%A0%E6%B3%95%E6%A0%B9%E6%8D%AE%E8%BF%99%E4%BA%9B%E6%96%87%E4%BB%B6%E9%AA%8C%E8%AF%81%E6%82%A8%E7%9A%84%E8%BA%AB%E4%BB%BD%E3%80%82\n%E5%9B%A0%E6%AD%A4%EF%BC%8C%E6%82%A8%E7%9A%84%E8%B4%A6%E6%88%B7%E5%B0%86%E7%BB%A7%E7%BB%AD%E5%A4%84%E4%BA%8E%E6%9C%AA%E6%BF%80%E6%B4%BB%E7%8A%B6%E6%80%81%E3%80%82\n\n%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%8F%91%E7%94%9F%E8%BF%99%E7%A7%8D%E6%83%85%E5%86%B5%EF%BC%9F\n%E6%88%91%E4%BB%AC%E6%97%A0%E6%B3%95%E9%AA%8C%E8%AF%81%E6%82%A8%E6%8F%90%E4%BE%9B%E7%9A%84%E5%85%AC%E5%8F%B8%E8%AF%81%E4%BB%B6%EF%BC%8C%E5%9B%A0%E4%B8%BA\n\n-- %E6%82%A8%E6%B3%A8%E5%86%8C%E8%B4%A6%E6%88%B7%E6%97%B6%E5%9C%A8%E5%8D%96%E5%AE%B6%E5%B9%B3%E5%8F%B0%E4%B8%AD%E8%BE%93%E5%85%A5%E7%9A%84%E7%BC%96%E7%A0%81%E4%B8%8E%E7%BB%9F%E4%B8%80%E7%A4%BE%E4%BC%9A%E4%BF%A1%E7%94%A8%E4%BB%A3%E7%A0%81%E4%B8%8D%E4%B8%80%E8%87%B4%E3%80%82%E8%AF%B7%E5%9C%A8%E5%8D%96%E5%AE%B6%E5%B9%B3%E5%8F%B0%E4%B8%AD%E6%9B%B4%E6%96%B0%E7%9B%B8%E5%BA%94%E7%BC%96%E7%A0%81%EF%BC%8C%E4%BD%BF%E5%85%B6%E4%B8%8E%E8%90%A5%E4%B8%9A%E6%89%A7%E7%85%A7%E4%B8%AD%E7%9A%84%E7%BB%9F%E4%B8%80%E7%A4%BE%E4%BC%9A%E4%BF%A1%E7%94%A8%E4%BB%A3%E7%A0%81%E6%88%96%E6%B3%A8%E5%86%8C%E5%8F%B7%E4%B8%80%E8%87%B4%E3%80%82\n\n%E8%A6%81%E8%AF%A6%E7%BB%86%E4%BA%86%E8%A7%A3%E6%88%91%E4%BB%AC%E7%9A%84%E8%A6%81%E6%B1%82%EF%BC%8C%E8%AF%B7%E5%8F%82%E9%98%85\"%E5%85%A8%E7%90%83%E5%8D%96%E5%AE%B6%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81\"\n https://sellercentral.amazon.com/gp/help/external/QRP483PDN88Q3M9 \n\n%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E8%BF%99%E7%A7%8D%E6%83%85%E5%86%B5%EF%BC%9F\n%E8%AF%B7%E5%9C%A8%E6%94%B6%E5%88%B0%E6%AD%A4%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6%E9%80%9A%E7%9F%A5%E5%90%8E%E7%9A%84 10 %E5%A4%A9%E5%86%85%E4%B8%8A%E4%BC%A0\"%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81\"%E9%A1%B5%E9%9D%A2%E4%B8%8A%E5%88%97%E5%87%BA%E7%9A%84%E6%89%80%E6%9C%89%E8%A6%81%E6%B1%82%E6%8F%90%E4%BE%9B%E7%9A%84%E6%96%87%E4%BB%B6%E7%9A%84%E6%89%AB%E6%8F%8F%E4%BB%B6%E6%88%96%E7%85%A7%E7%89%87%E3%80%82\n%E8%AF%B7%E7%A1%AE%E4%BF%9D%E6%82%A8%E5%9C%A8%E5%8D%96%E5%AE%B6%E5%B9%B3%E5%8F%B0%E4%B8%AD%E8%BE%93%E5%85%A5%E7%9A%84%E4%BF%A1%E6%81%AF%E4%B8%8E%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84%E4%BF%A1%E6%81%AF%E4%B8%80%E8%87%B4%E3%80%82\n%E8%A6%81%E6%8F%90%E4%BA%A4%E8%A6%81%E6%B1%82%E7%9A%84%E6%96%87%E4%BB%B6%E6%88%96%E6%9B%B4%E6%96%B0%E6%82%A8%E7%9A%84%E4%BF%A1%E6%81%AF%EF%BC%8C%E8%AF%B7%E7%99%BB%E5%BD%95%E5%8D%96%E5%AE%B6%E5%B9%B3%E5%8F%B0%EF%BC%8C%E5%AF%BC%E8%88%AA%E8%87%B3\"%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81\"%E9%A1%B5%E9%9D%A2%EF%BC%8C%E7%84%B6%E5%90%8E%E6%8C%89%E7%85%A7%E5%B1%8F%E5%B9%95%E4%B8%8A%E7%9A%84%E8%AF%B4%E6%98%8E%E6%93%8D%E4%BD%9C%EF%BC%9A\n https://sellercentral.amazon.com \n%E8%AF%B7%E5%8B%BF%E5%9B%9E%E5%A4%8D%E6%AD%A4%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6%EF%BC%8C%E5%B9%B6%E5%9C%A8%E9%99%84%E4%BB%B6%E4%B8%AD%E6%8F%90%E4%BE%9B%E8%A6%81%E6%B1%82%E7%9A%84%E6%96%87%E4%BB%B6%E3%80%82%E5%87%BA%E4%BA%8E%E5%AE%89%E5%85%A8%E5%8E%9F%E5%9B%A0%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AA%E6%8E%A5%E5%8F%97%E4%B8%8A%E4%BC%A0%E5%88%B0%E5%8D%96%E5%AE%B6%E5%B9%B3%E5%8F%B0%E4%B8%AD\"%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81\"%E9%83%A8%E5%88%86%E7%9A%84%E6%96%87%E4%BB%B6%E3%80%82\n\n%E5%A6%82%E6%9E%9C%E6%88%91%E6%B2%A1%E6%9C%89%E4%B8%8A%E4%BC%A0%E8%A6%81%E6%B1%82%E6%8F%90A%E4%BE%9B%E7%9A%84%E6%96%87%E4%BB%B6%EF%BC%8C%E4%BC%9A%E6%80%8E%E4%B9%88%E6%A0%B7%EF%BC%9F\n%E5%A6%82%E6%9E%9C%E6%82%A8%E6%9C%AA%E5%9C%A8%E6%94%B6%E5%88%B0%E6%AD%A4%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6%E9%80%9A%E7%9F%A5%E5%90%8E%E7%9A%84 10 %E5%A4%A9%E5%86%85%E6%8F%90%E4%BE%9B%E8%A6%81%E6%B1%82%E7%9A%84%E4%BF%A1%E6%81%AF%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AF%E8%83%BD%E4%BC%9A%E6%9A%82%E5%81%9C%E5%90%91%E6%82%A8%E7%9A%84%E4%BA%9A%E9%A9%AC%E9%80%8A%E9%94%80%E5%94%AE%E8%B4%A6%E6%88%B7%E4%BB%98%E6%AC%BE%EF%BC%8C%E4%B9%9F%E5%8F%AF%E8%83%BD%E4%BC%9A%E5%81%9C%E7%94%A8%E6%82%A8%E7%9A%84%E8%B4%A6%E6%88%B7%E3%80%82\n\n%E6%88%91%E4%BB%AC%E9%9A%8F%E6%97%B6%E4%B8%BA%E6%82%A8%E6%8F%90%E4%BE%9B%E5%B8%AE%E5%8A%A9\n%E5%A6%82%E6%9E%9C%E6%82%A8%E5%AF%B9%E6%88%91%E4%BB%AC%E7%9A%84%E6%94%BF%E7%AD%96%E6%88%96%E8%A6%81%E6%B1%82%E6%9C%89%E4%BB%BB%E4%BD%95%E5%85%B6%E4%BB%96%E7%96%91%E9%97%AE%EF%BC%8C%E8%AF%B7%E8%81%94%E7%B3%BB%E9%94%80%E5%94%AE%E4%BC%99%E4%BC%B4%E6%94%AF%E6%8C%81%EF%BC%9A\nhttps://sellercentral.amazon.com/cu/contact-us \n\n%E5%8D%96%E5%AE%B6%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81%E5%9B%A2%E9%98%9F"
+};
+
+const elements = {
+  templateList: document.getElementById("templateList"),
+  editorModal: document.getElementById("editorModal"),
+  miniModal: document.getElementById("miniModal"),
+  miniModalTitle: document.getElementById("miniModalTitle"),
+  miniModalText: document.getElementById("miniModalText"),
+  miniModalField: document.getElementById("miniModalField"),
+  miniModalInput: document.getElementById("miniModalInput"),
+  miniModalConfirm: document.getElementById("miniModalConfirm"),
+  miniModalCancel: document.getElementById("miniModalCancel"),
+  templateName: document.getElementById("templateName"),
+  templateContent: document.getElementById("templateContent"),
+  saveTemplate: document.getElementById("saveTemplate"),
+  cancelEdit: document.getElementById("cancelEdit"),
+  addTemplate: document.getElementById("addTemplate"),
+  exportTemplates: document.getElementById("exportTemplates"),
+  importTemplates: document.getElementById("importTemplates"),
+  importFileInput: document.getElementById("importFileInput"),
+  closePopup: document.getElementById("closePopup"),
+  editorTitle: document.getElementById("editorTitle"),
+  statusMessage: document.getElementById("statusMessage")
+};
+
+let templates = {};
+let editingName = null;
+let miniModalHandler = null;
+const extensionStorage = (() => {
+  if (typeof browser !== "undefined" && browser.storage && browser.storage.local) {
+    return browser.storage.local;
+  }
+
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+    return {
+      get(key) {
+        return new Promise((resolve, reject) => {
+          chrome.storage.local.get(key, (result) => {
+            const error = chrome.runtime && chrome.runtime.lastError;
+            if (error) {
+              reject(new Error(error.message));
+              return;
+            }
+            resolve(result);
+          });
+        });
+      },
+      set(data) {
+        return new Promise((resolve, reject) => {
+          chrome.storage.local.set(data, () => {
+            const error = chrome.runtime && chrome.runtime.lastError;
+            if (error) {
+              reject(new Error(error.message));
+              return;
+            }
+            resolve();
+          });
+        });
+      }
+    };
+  }
+
+  return {
+    async get(key) {
+      const raw = window.localStorage.getItem(key);
+      return { [key]: raw ? JSON.parse(raw) : undefined };
+    },
+    async set(data) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data[STORAGE_KEY]));
+    }
+  };
+})();
+
+function openEditor(title, name = "", content = "") {
+  elements.editorTitle.textContent = title;
+  elements.templateName.value = name;
+  elements.templateContent.value = content;
+  elements.editorModal.hidden = false;
+  window.setTimeout(() => elements.templateName.focus(), 0);
+}
+
+function closeEditor() {
+  elements.editorModal.hidden = true;
+}
+
+function openMiniModal({ title, text = "", showInput = false, inputValue = "", onConfirm }) {
+  elements.miniModalTitle.textContent = title;
+  elements.miniModalText.textContent = text;
+  elements.miniModalField.hidden = !showInput;
+  elements.miniModalInput.value = inputValue;
+  miniModalHandler = onConfirm;
+  elements.miniModal.hidden = false;
+
+  window.setTimeout(() => {
+    if (showInput) {
+      elements.miniModalInput.focus();
+      elements.miniModalInput.select();
+    } else {
+      elements.miniModalConfirm.focus();
+    }
+  }, 0);
+}
+
+function closeMiniModal() {
+  elements.miniModal.hidden = true;
+  elements.miniModalInput.value = "";
+  miniModalHandler = null;
+}
+
+function closePopupWindow() {
+  if (!elements.editorModal.hidden) {
+    resetEditor();
+    setStatus("已关闭编辑框");
+    return;
+  }
+
+  window.close();
+
+  window.setTimeout(() => {
+    if (!window.closed) {
+      setStatus("如果弹窗没有关闭，点浏览器空白处也可以关闭。");
+    }
+  }, 120);
+}
+
+function decodeDefaultTemplates() {
+  return Object.fromEntries(
+    Object.entries(encodedDefaultTemplates).map(([name, content]) => [
+      decodeURIComponent(name),
+      decodeURIComponent(content)
+    ])
+  );
+}
+
+async function loadTemplates() {
+  const stored = await extensionStorage.get(STORAGE_KEY);
+  const savedTemplates = stored[STORAGE_KEY];
+
+  if (savedTemplates && typeof savedTemplates === "object") {
+    templates = savedTemplates;
+    return;
+  }
+
+  templates = decodeDefaultTemplates();
+  await persistTemplates();
+}
+
+async function persistTemplates() {
+  await extensionStorage.set({ [STORAGE_KEY]: templates });
+}
+
+function downloadTextFile(filename, content) {
+  const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function setStatus(message, isError = false) {
+  elements.statusMessage.textContent = message;
+  elements.statusMessage.classList.toggle("error", isError);
+}
+
+function resetEditor() {
+  editingName = null;
+  elements.templateName.value = "";
+  elements.templateContent.value = "";
+  closeEditor();
+}
+
+function startEdit(name) {
+  editingName = name;
+  openEditor("编辑模板", name, templates[name] || "");
+  setStatus(`正在编辑「${name}」`);
+}
+
+function createPreview(content) {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized ? normalized.slice(0, 120) : "空模板";
+}
+
+function renderTemplateList() {
+  const names = Object.keys(templates);
+  elements.templateList.innerHTML = "";
+
+  if (!names.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "还没有模板，先创建一个吧。";
+    elements.templateList.appendChild(empty);
+    return;
+  }
+
+  names.forEach((name) => {
+    const card = document.createElement("article");
+    card.className = "template-card";
+
+    const title = document.createElement("h3");
+    title.className = "template-name";
+    title.textContent = name;
+    title.addEventListener("click", () => applyTemplateToCurrentTab(name));
+
+    const preview = document.createElement("p");
+    preview.className = "template-preview";
+    preview.textContent = createPreview(templates[name]);
+
+    const actions = document.createElement("div");
+    actions.className = "template-actions";
+
+    const applyButton = document.createElement("button");
+    applyButton.type = "button";
+    applyButton.textContent = "+";
+    applyButton.addEventListener("click", () => applyTemplateToCurrentTab(name));
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.textContent = "#";
+    editButton.addEventListener("click", () => startEdit(name));
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "danger";
+    deleteButton.type = "button";
+    deleteButton.textContent = "-";
+    deleteButton.addEventListener("click", async () => {
+      openMiniModal({
+        title: "删除模板",
+        text: `确定删除模板“${name}”吗？`,
+        onConfirm: async () => {
+          delete templates[name];
+          await persistTemplates();
+          renderTemplateList();
+
+          if (editingName === name) {
+            resetEditor();
+          }
+
+          setStatus(`已删除模板「${name}」`);
+        }
+      });
+    });
+
+    actions.append(applyButton, editButton, deleteButton);
+    card.append(title, preview, actions);
+    elements.templateList.appendChild(card);
+  });
+}
+
+async function saveTemplate() {
+  const newName = elements.templateName.value.trim();
+  const newContent = elements.templateContent.value;
+
+  if (!newName) {
+    setStatus("请输入模板名称。", true);
+    elements.templateName.focus();
+    return;
+  }
+
+  const isRenaming = editingName && editingName !== newName;
+  if ((isRenaming || !editingName) && Object.prototype.hasOwnProperty.call(templates, newName)) {
+    setStatus("模板名称已存在，请换一个名称。", true);
+    return;
+  }
+
+  if (editingName && editingName !== newName) {
+    delete templates[editingName];
+  }
+
+  templates[newName] = newContent;
+  await persistTemplates();
+  renderTemplateList();
+  resetEditor();
+  setStatus(`模板「${newName}」已保存`);
+}
+
+function exportTemplates() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    templates
+  };
+  downloadTextFile(
+    `blurb-templates-${new Date().toISOString().slice(0, 10)}.json`,
+    JSON.stringify(payload, null, 2)
+  );
+  setStatus("模板已导出");
+}
+
+async function importTemplatesFromFile(file) {
+  if (!file) {
+    return;
+  }
+
+  const text = await file.text();
+  const parsed = JSON.parse(text);
+  const nextTemplates =
+    parsed && typeof parsed === "object" && parsed.templates && typeof parsed.templates === "object"
+      ? parsed.templates
+      : parsed;
+
+  if (!nextTemplates || typeof nextTemplates !== "object" || Array.isArray(nextTemplates)) {
+    throw new Error("导入文件格式不正确");
+  }
+
+  templates = { ...nextTemplates };
+  await persistTemplates();
+  renderTemplateList();
+  resetEditor();
+  setStatus("模板已导入");
+}
+
+function fillTextInput(element, value) {
+  if (!element) {
+    return;
+  }
+
+  element.focus();
+  element.value = value;
+  element.dispatchEvent(new Event("input", { bubbles: true }));
+  element.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function chooseSelectOption(selectHeader, optionText) {
+  if (!selectHeader) {
+    return;
+  }
+
+  selectHeader.click();
+
+  window.setTimeout(() => {
+    const options = Array.from(document.querySelectorAll(".select-options div"));
+    const target = options.find((option) => option.innerText.trim() === optionText);
+    if (target) {
+      target.click();
+    }
+  }, 80);
+}
+
+async function applyTemplateToCurrentTab(name) {
+  const templateContent = templates[name];
+
+  if (!templateContent) {
+    setStatus("模板内容为空，无法应用。", true);
+    return;
+  }
+
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab || typeof tab.id !== "number") {
+      throw new Error("没有找到当前标签页。");
+    }
+
+    await browser.tabs.executeScript(tab.id, {
+      code: `(${injectedApplyTemplate.toString()})(${JSON.stringify({
+        subject: SUBJECT_TEXT,
+        content: templateContent,
+        reasonText: REASON_TEXT
+      })});`
+    });
+
+    setStatus(`已将模板「${name}」应用到当前页面`);
+  } catch (error) {
+    setStatus(`应用失败：${error.message}`, true);
+  }
+}
+
+function injectedApplyTemplate(config) {
+  function fillTextInput(element, value) {
+    if (!element) {
+      return false;
+    }
+
+    element.focus();
+    element.value = value;
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
+
+  function fillShadowInput(host, value) {
+    const input =
+      host?.shadowRoot?.querySelector("input") ||
+      host?.shadowRoot?.querySelector("#katal-id-7");
+
+    if (!input) {
+      return false;
+    }
+
+    input.focus();
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    input.dispatchEvent(new Event("blur", { bubbles: true, composed: true }));
+    return true;
+  }
+
+  function fillSubjectInput(value) {
+    const newSubjectHost =
+      document.querySelector("kat-input#createCaseInput") ||
+      document.querySelector("#subject-input-group kat-input");
+
+    if (fillShadowInput(newSubjectHost, value)) {
+      return true;
+    }
+
+    return (
+      fillTextInput(document.getElementById("katal-id-7"), value) ||
+      fillTextInput(document.getElementById("katal-id-6"), value)
+    );
+  }
+
+  function chooseSelectByIndexAndText(index, text, delay) {
+    const selectHeader = document.querySelectorAll(
+      "div.kat-select-container.small .select-header"
+    )[index];
+
+    if (!selectHeader) {
+      return false;
+    }
+
+    selectHeader.click();
+
+    window.setTimeout(() => {
+      const options = document.querySelectorAll(".select-options div");
+      options.forEach((option) => {
+        if (option.innerText.trim() === text) {
+          option.click();
+        }
+      });
+    }, delay);
+
+    return true;
+  }
+
+  function chooseResolvedStatus() {
+    const labelText = Array.from(document.querySelectorAll('span[part="label-text"]'))
+      .find((element) => element.textContent?.trim() === "Resolved");
+
+    const label = labelText?.closest("label");
+
+    if (!label) {
+      return false;
+    }
+
+    label.click();
+    return true;
+  }
+
+  fillSubjectInput(config.subject);
+  fillTextInput(document.querySelector("textarea"), config.content);
+
+  const firstOk = chooseSelectByIndexAndText(
+    3,
+    "Other or Non-TAM Actionable Cases",
+    50
+  );
+
+  if (firstOk) {
+    window.setTimeout(() => {
+      chooseSelectByIndexAndText(
+        4,
+        config.reasonText,
+        50
+      );
+    }, 800);
+  }
+
+  window.setTimeout(() => {
+    chooseResolvedStatus();
+  }, 1200);
+
+  window.setTimeout(() => {
+    const submitButton = document.getElementById("katal-id-17");
+    if (submitButton) {
+      submitButton.click();
+    }
+  }, 1600);
+}
+
+elements.saveTemplate.addEventListener("click", async () => {
+  try {
+    await saveTemplate();
+  } catch (error) {
+    setStatus(`保存失败：${error.message}`, true);
+  }
+});
+elements.cancelEdit.addEventListener("click", () => {
+  resetEditor();
+  setStatus("已取消编辑");
+});
+elements.addTemplate.addEventListener("click", () => {
+  openMiniModal({
+    title: "新建模板",
+    text: "请输入新模板名称：",
+    showInput: true,
+    onConfirm: async () => {
+      const trimmedName = elements.miniModalInput.value.trim();
+      if (!trimmedName) {
+        throw new Error("请输入模板名称");
+      }
+      if (Object.prototype.hasOwnProperty.call(templates, trimmedName)) {
+        throw new Error("模板名称已存在");
+      }
+
+      editingName = null;
+      openEditor("新建模板", trimmedName, "");
+      setStatus(`请编辑并保存模板「${trimmedName}」`);
+    }
+  });
+});
+elements.exportTemplates.addEventListener("click", () => {
+  exportTemplates();
+});
+elements.importTemplates.addEventListener("click", () => {
+  elements.importFileInput.value = "";
+  elements.importFileInput.click();
+});
+elements.importFileInput.addEventListener("change", async (event) => {
+  try {
+    await importTemplatesFromFile(event.target.files?.[0]);
+  } catch (error) {
+    setStatus(`导入失败：${error.message}`, true);
+  }
+});
+elements.closePopup.addEventListener("click", () => {
+  closePopupWindow();
+});
+elements.editorModal.addEventListener("click", (event) => {
+  if (event.target === elements.editorModal) {
+    resetEditor();
+    setStatus("已取消编辑");
+  }
+});
+elements.miniModal.addEventListener("click", (event) => {
+  if (event.target === elements.miniModal) {
+    closeMiniModal();
+  }
+});
+elements.miniModalCancel.addEventListener("click", () => {
+  closeMiniModal();
+});
+elements.miniModalConfirm.addEventListener("click", async () => {
+  if (!miniModalHandler) {
+    closeMiniModal();
+    return;
+  }
+
+  try {
+    await miniModalHandler();
+    closeMiniModal();
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+});
+elements.miniModalInput.addEventListener("keydown", async (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  elements.miniModalConfirm.click();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !elements.editorModal.hidden) {
+    resetEditor();
+    setStatus("已取消编辑");
+    return;
+  }
+
+  if (event.key === "Escape" && !elements.miniModal.hidden) {
+    closeMiniModal();
+  }
+});
+
+async function init() {
+  try {
+    await loadTemplates();
+    renderTemplateList();
+    resetEditor();
+    setStatus("模板已加载");
+  } catch (error) {
+    setStatus(`初始化失败：${error.message}`, true);
+  }
+}
+
+init();
