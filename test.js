@@ -321,4 +321,106 @@ if (selectHeader) {
 
 
 
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function clickDropdownTrigger(host) {
+    const trigger =
+      host?.shadowRoot?.querySelector('.select-header') ||
+      host?.shadowRoot?.querySelector('[id^="katal-id-"]');
+
+    if (!trigger) return false;
+
+    const fireMouse = (type) => {
+      trigger.dispatchEvent(new MouseEvent(type, {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      }));
+    };
+
+    trigger.focus();
+    fireMouse('pointerdown');
+    fireMouse('mousedown');
+    fireMouse('mouseup');
+    fireMouse('click');
+    return true;
+  }
+
+  async function chooseDropdownOption(host, targetValue) {
+    if (!host || !clickDropdownTrigger(host)) return false;
+
+    await sleep(250);
+
+    const shadow = host.shadowRoot;
+    const option =
+      shadow?.querySelector(`kat-option[value="${targetValue}"]`) ||
+      [...(shadow?.querySelectorAll('kat-option') || [])].find(
+        (node) => node.getAttribute('value') === String(targetValue)
+      );
+
+    if (!option) {
+      console.log(
+        '没找到 option',
+        targetValue,
+        [...(shadow?.querySelectorAll('kat-option') || [])].map(node => ({
+          value: node.getAttribute('value'),
+          text: node.innerText?.trim(),
+          title: node.getAttribute('title')
+        }))
+      );
+      return false;
+    }
+
+    option.click();
+    option.dispatchEvent(new MouseEvent('click', {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+
+    return true;
+  }
+
+  const CATEGORY_VALUE = '10069';
+  const REASON_TEXT = 'Other - No Applicable Reason Code';
+
+  const dropdowns = [...document.querySelectorAll('kat-dropdown')];
+
+  const categoryDropdown =
+    dropdowns.find(node => node.getAttribute('label') === 'Reason category') ||
+    dropdowns[3];
+
+  const firstOk = await chooseDropdownOption(categoryDropdown, CATEGORY_VALUE);
+  console.log('第一个下拉结果 =', firstOk);
+
+  await sleep(1000);
+
+  const refreshed = [...document.querySelectorAll('kat-dropdown')];
+  const reasonDropdown =
+    refreshed.find(node => node.getAttribute('label') === 'Reason code') ||
+    refreshed[4];
+
+  if (!reasonDropdown) {
+    console.log('没找到第二个下拉框');
+    return;
+  }
+
+  const reasonOptions = JSON.parse(reasonDropdown.getAttribute('options') || '[]');
+  const matchedReason = reasonOptions.find(item => item.name === REASON_TEXT);
+
+  if (!matchedReason) {
+    console.log('没找到第二个下拉目标项', REASON_TEXT, reasonOptions);
+    return;
+  }
+
+  const secondOk = await chooseDropdownOption(reasonDropdown, String(matchedReason.value));
+  console.log('第二个下拉结果 =', secondOk, matchedReason);
+})();
+
+
+
+
 
