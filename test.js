@@ -333,28 +333,121 @@ function startUltimateAutoBot() {
 })();
 
 
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetText = 'Other or Non-TAM Actionable Cases';
+
+  const host =
+    document.querySelector('kat-dropdown.first-column-dropdown') ||
+    document.querySelector('kat-dropdown[label="Reason category"]');
+
+  if (!host) {
+    console.log('没找到第一个下拉框');
+    return;
+  }
+
+  const raw = host.getAttribute('options') || '[]';
+  let options = [];
+  try {
+    options = JSON.parse(raw);
+  } catch (e) {
+    console.log('options 解析失败', raw, e);
+    return;
+  }
+
+  const index = options.findIndex(item => item?.name?.trim() === targetText);
+
+  if (index < 0) {
+    console.log('没找到目标项:', targetText, options);
+    return;
+  }
+
+  const trigger =
+    host.shadowRoot?.querySelector('.select-header') ||
+    host.shadowRoot?.querySelector('#katal-id-9') ||
+    host.shadowRoot?.querySelector('#katal-id-10');
+
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
+  }
+
+  const fireKey = (key) => {
+    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+      key,
+      code: key,
+      keyCode: key === 'ArrowDown' ? 40 : key === 'Home' ? 36 : 13,
+      which: key === 'ArrowDown' ? 40 : key === 'Home' ? 36 : 13,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  trigger.focus();
+  trigger.click();
+  await sleep(250);
+
+  fireKey('Home');
+  await sleep(100);
+
+  for (let i = 0; i < index; i += 1) {
+    fireKey('ArrowDown');
+    await sleep(60);
+  }
+
+  fireKey('Enter');
+
+  console.log('已尝试选择:', targetText, 'index=', index, options[index]);
+})();
+
+
 
 (async () => {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetText = 'Other or Non-TAM Actionable Cases';
 
   const host = document.querySelector('kat-dropdown.first-column-dropdown');
+  const options = JSON.parse(host?.getAttribute('options') || '[]');
+  const index = options.findIndex(item => item?.name?.trim() === targetText);
+
+  if (index < 0) {
+    console.log('没找到目标项', targetText, options);
+    return;
+  }
+
   const trigger =
     host?.shadowRoot?.querySelector('.select-header') ||
     host?.shadowRoot?.querySelector('#katal-id-9') ||
     host?.shadowRoot?.querySelector('#katal-id-10');
 
-  trigger?.click();
-  await sleep(500);
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
+  }
 
-  const inside = [...host.shadowRoot.querySelectorAll('*')]
-    .map(el => ({
-      text: el.innerText?.trim(),
-      tag: el.tagName,
-      cls: el.className,
-      id: el.id
-    }))
-    .filter(x => x.text);
+  const fireKey = (key) => {
+    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+      key,
+      code: key,
+      keyCode: key === 'ArrowDown' ? 40 : 13,
+      which: key === 'ArrowDown' ? 40 : 13,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
 
-  console.log(inside);
+  trigger.focus();
+  trigger.click();
+  await sleep(250);
+
+  for (let i = 0; i <= index; i += 1) {
+    fireKey('ArrowDown');
+    await sleep(60);
+  }
+
+  fireKey('Enter');
+  console.log('已尝试选择:', targetText, 'index=', index);
 })();
 
