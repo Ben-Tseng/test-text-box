@@ -365,3 +365,123 @@ if (selectHeader) {
   fireKey('Enter');
   console.log('已尝试按第 9 项选择');
 })();
+
+
+
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetText = 'Other or Non-TAM Actionable Cases';
+
+  const host = document.querySelectorAll('kat-dropdown')[3];
+  if (!host) {
+    console.log('没找到第4个 kat-dropdown');
+    return;
+  }
+
+  const options = JSON.parse(host.getAttribute('options') || '[]');
+  const index = options.findIndex(item => item.name === targetText);
+
+  if (index < 0) {
+    console.log('没找到目标项:', targetText, options);
+    return;
+  }
+
+  const trigger =
+    host.shadowRoot?.querySelector('.select-header') ||
+    host.shadowRoot?.querySelector('#katal-id-10') ||
+    host.shadowRoot?.querySelector('#katal-id-9');
+
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
+  }
+
+  const fireMouse = (type) => {
+    trigger.dispatchEvent(new MouseEvent(type, {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  const fireKey = (key) => {
+    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+      key,
+      code: key,
+      keyCode: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
+      which: key === 'ArrowDown' ? 40 : key === 'Enter' ? 13 : 36,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  trigger.focus();
+  fireMouse('pointerdown');
+  fireMouse('mousedown');
+  fireMouse('mouseup');
+  fireMouse('click');
+
+  await sleep(300);
+
+  fireKey('Home');
+  await sleep(100);
+
+  for (let i = 0; i < index; i++) {
+    fireKey('ArrowDown');
+    await sleep(80);
+  }
+
+  fireKey('Enter');
+  console.log('已尝试选择:', targetText, 'index=', index);
+})();
+
+
+
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const targetText = 'Other or Non-TAM Actionable Cases';
+
+  const host = document.querySelectorAll('kat-dropdown')[3];
+  const options = JSON.parse(host.getAttribute('options') || '[]');
+  const index = options.findIndex(item => item.name === targetText);
+  const trigger = host.shadowRoot.querySelector('.select-header');
+
+  const fireMouse = (type) => {
+    trigger.dispatchEvent(new MouseEvent(type, {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  const fireKey = (key) => {
+    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+      key,
+      code: key,
+      keyCode: key === 'ArrowDown' ? 40 : 13,
+      which: key === 'ArrowDown' ? 40 : 13,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  trigger.focus();
+  fireMouse('pointerdown');
+  fireMouse('mousedown');
+  fireMouse('mouseup');
+  fireMouse('click');
+
+  await sleep(300);
+
+  for (let i = 0; i <= index; i++) {
+    fireKey('ArrowDown');
+    await sleep(80);
+  }
+
+  fireKey('Enter');
+})();
+
