@@ -276,6 +276,9 @@ function startUltimateAutoBot() {
 })();
 
 
+const host = document.querySelector('kat-dropdown.first-column-dropdown');
+const trigger = host.shadowRoot.querySelector('#katal-id-10');
+trigger.click();
 
 
 
