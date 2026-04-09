@@ -254,57 +254,102 @@ function startUltimateAutoBot() {
 
 
 (() => {
+  const targetText = 'Other or Non-TAM Actionable Cases';
+
   const host =
     document.querySelector('kat-dropdown.first-column-dropdown') ||
     document.querySelector('kat-dropdown[label="Category"]');
 
   if (!host) {
-    console.log('没找到 dropdown');
+    console.log('没找到第一个下拉框');
     return;
   }
 
-  const keys = Object.keys(host).sort();
-  console.log('host =', host);
-  console.log('keys =', keys);
+  const options = Array.isArray(host._options) ? host._options : [];
+  console.log('host._options =', options);
 
-  const interesting = {};
-  for (const key of keys) {
-    const val = host[key];
-    if (
-      key.toLowerCase().includes('option') ||
-      key.toLowerCase().includes('value') ||
-      key.toLowerCase().includes('select') ||
-      key.toLowerCase().includes('item')
-    ) {
-      interesting[key] = val;
-    }
+  const match = options.find((item) => {
+    const texts = [
+      item?.name,
+      item?.label,
+      item?.text,
+      item?.title,
+      item?.value
+    ].filter(Boolean).map(String);
+
+    return texts.some((t) => t.trim() === targetText);
+  });
+
+  if (!match) {
+    console.log('没找到目标选项:', targetText, options);
+    return;
   }
 
-  console.log('interesting =', interesting);
+  console.log('match =', match);
+
+  if (typeof host.selectOption === 'function') {
+    host.selectOption(match);
+  } else if (typeof host.setSelectedValues === 'function') {
+    host.setSelectedValues([match.value ?? match.name ?? match.label]);
+  } else {
+    host.value = match.value ?? match.name ?? match.label;
+  }
+
+  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+
+  console.log('已尝试设置为:', match);
+})();
+
+(() => {
+  const targetText = 'Other or Non-TAM Actionable Cases';
+
+  const host =
+    document.querySelector('kat-dropdown.first-column-dropdown') ||
+    document.querySelector('kat-dropdown[label="Category"]');
+
+  if (!host) {
+    console.log('没找到第一个下拉框');
+    return;
+  }
+
+  const options = Array.isArray(host._options) ? host._options : [];
+  const match = options.find((item) => {
+    const texts = [
+      item?.name,
+      item?.label,
+      item?.text,
+      item?.title,
+      item?.value
+    ].filter(Boolean).map(String);
+
+    return texts.some((t) => t.trim() === targetText);
+  });
+
+  if (!match) {
+    console.log('没找到目标选项:', targetText, options);
+    return;
+  }
+
+  const pickedValue = match.value ?? match.name ?? match.label;
+
+  try { host.selectOption?.(match); } catch (e) { console.log('selectOption 失败', e); }
+  try { host.setSelectedValues?.([pickedValue]); } catch (e) { console.log('setSelectedValues 失败', e); }
+  try { host.setSelectedItemsAsDOMValues?.([pickedValue]); } catch (e) { console.log('setSelectedItemsAsDOMValues 失败', e); }
+
+  try { host.value = pickedValue; } catch (e) {}
+  try { host.setAttribute('value', pickedValue); } catch (e) {}
+
+  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+
+  console.log('match =', match);
+  console.log('pickedValue =', pickedValue);
 })();
 
 (() => {
   const host = document.querySelector('kat-dropdown.first-column-dropdown');
-  if (!host) return console.log('没找到 host');
-
-  console.log('host.options =', host.options);
-  console.log('host.value =', host.value);
-  console.log('host.selected =', host.selected);
-  console.log('host.selectedOptions =', host.selectedOptions);
-  console.log('host.items =', host.items);
-  console.log('host.data =', host.data);
-})();
-
-(() => {
-  const host = document.querySelector('kat-dropdown.first-column-dropdown');
-  if (!host) return console.log('没找到 host');
-
-  const proto = Object.getPrototypeOf(host);
-  const methods = Object.getOwnPropertyNames(proto).filter(
-    k => typeof host[k] === 'function'
-  );
-
-  console.log('methods =', methods);
+  console.log(host?._options);
 })();
 
 
