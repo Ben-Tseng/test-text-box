@@ -273,76 +273,95 @@ if (selectHeader) {
 }
 
 
-
 (() => {
   const host = document.querySelectorAll('kat-dropdown')[3];
   if (!host) {
-    console.log('没找到下拉框');
+    console.log('没找到第4个 kat-dropdown');
     return;
   }
 
-  host.value = '10069';
-  host.setAttribute('value', '10069');
-  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  const trigger =
+    host.shadowRoot?.querySelector('.select-header') ||
+    host.shadowRoot?.querySelector('#katal-id-10') ||
+    host.shadowRoot?.querySelector('#katal-id-9');
 
-  console.log('已尝试设置 value=10069', host);
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
+  }
+
+  const fire = (type) => {
+    trigger.dispatchEvent(new MouseEvent(type, {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  trigger.focus();
+  fire('pointerdown');
+  fire('mousedown');
+  fire('mouseup');
+  fire('click');
+
+  console.log('已尝试点击 trigger', trigger);
 })();
 
 
-(() => {
+(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
   const host = document.querySelectorAll('kat-dropdown')[3];
   if (!host) {
-    console.log('没找到下拉框');
+    console.log('没找到 dropdown');
     return;
   }
 
-  const targetName = 'Other or Non-TAM Actionable Cases';
-  const targetValue = '10069';
+  const trigger =
+    host.shadowRoot?.querySelector('.select-header') ||
+    host.shadowRoot?.querySelector('#katal-id-10') ||
+    host.shadowRoot?.querySelector('#katal-id-9');
 
-  host.value = targetValue;
-  host.setAttribute('value', targetValue);
-
-  const selectionText = host.shadowRoot?.querySelector('.selection-text');
-  const placeholderText = host.shadowRoot?.querySelector('.placeholder-text');
-
-  if (selectionText) {
-    selectionText.textContent = targetName;
-    selectionText.classList.remove('hidden');
+  if (!trigger) {
+    console.log('没找到 trigger');
+    return;
   }
 
-  if (placeholderText) {
-    placeholderText.textContent = targetName;
+  const fireMouse = (type) => {
+    trigger.dispatchEvent(new MouseEvent(type, {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  const fireKey = (key) => {
+    trigger.dispatchEvent(new KeyboardEvent('keydown', {
+      key,
+      code: key,
+      keyCode: key === 'ArrowDown' ? 40 : 13,
+      which: key === 'ArrowDown' ? 40 : 13,
+      bubbles: true,
+      cancelable: true,
+      composed: true
+    }));
+  };
+
+  trigger.focus();
+  fireMouse('pointerdown');
+  fireMouse('mousedown');
+  fireMouse('mouseup');
+  fireMouse('click');
+
+  await sleep(300);
+
+  for (let i = 0; i < 8; i++) {
+    fireKey('ArrowDown');
+    await sleep(80);
   }
 
-  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-
-  console.log('已尝试强制设置', { targetName, targetValue });
+  fireKey('Enter');
+  console.log('已尝试按第 9 项选择');
 })();
-
-
-
-(() => {
-  const host = document.querySelectorAll('kat-dropdown')[3];
-  if (!host) {
-    console.log('没找到下拉框');
-    return;
-  }
-
-  const match = (host._options || []).find(x => x.name === 'Other or Non-TAM Actionable Cases');
-  if (!match) {
-    console.log('没找到目标项', host._options);
-    return;
-  }
-
-  try { host.selectOption?.(match); } catch (e) { console.log('selectOption 失败', e); }
-  try { host.setSelectedValues?.([match.value]); } catch (e) { console.log('setSelectedValues 失败', e); }
-  try { host.setSelectedItemsAsDOMValues?.([match.value]); } catch (e) { console.log('setSelectedItemsAsDOMValues 失败', e); }
-
-  host.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  host.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-
-  console.log('已尝试组件方法设置', match);
-})();
-
