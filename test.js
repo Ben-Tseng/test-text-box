@@ -18,3 +18,6 @@ if (allDocsBtn) {
         console.log('未找到 All Documents 按钮');
     }
 }
+
+// 精简版 - 直接复制使用
+(function(){let r=[];(function s(d){d.querySelectorAll('a').forEach(a=>{a.textContent.includes('All Documents')&&r.push(a)});d.querySelectorAll('iframe').forEach(f=>{try{let c=f.contentDocument||f.contentWindow?.document;c&&s(c)}catch(e){}})})(document);r[0]?r[0].click():console.log('未找到');})();
