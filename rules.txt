@@ -398,7 +398,7 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
             box.style.marginTop='10px';
             box.style.backgroundColor='#f8d7da';
             box.style.color='#721c24';
-            box.style.width='100%';
+            box.style.width='550px';
             box.innerHTML='<strong>提示:</strong> '+message;
             e2.insertAdjacentElement('afterend',box);
             redBoxInserted=true;
@@ -415,7 +415,7 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
         generalAlert.style.marginTop='10px';
         generalAlert.style.backgroundColor='#d1ecf1';
         generalAlert.style.color='#0c5460';
-        generalAlert.style.width='100%';
+        generalAlert.style.width='550px';
         generalAlert.innerHTML='<strong>通用提示:</strong><br>'+generalMessage;
         if(redBoxInserted&&e2){
           const redBox=e2.nextElementSibling;
