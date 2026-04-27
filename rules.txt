@@ -125,9 +125,7 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
     if(!businessName)return false;
 
     function highlightKeywords(){
-      const keywords=["宜昌","襄阳","阳江","郫都区","厦门","广州","上海","江苏","江西","合肥","成都","武侯","珠海","内蒙","北京","武汉","深圳"];
       const k2s=["宜昌","襄阳","阳江","厦门","广州","上海","海口","合肥","成都","武侯","珠海","内蒙","北京","武汉","南京","苏州","无锡","常州","扬州","镇江","南通","盐城","徐州","连云港","淮安","宿迁","泰州","南昌","九江","景德镇","萍乡","新余","鹰潭","赣州","吉安","宜春","抚州","上饶","深圳","河南","昆明"];
-      const element=document.querySelectorAll("strong")[5];
       const e2=document.querySelectorAll("strong")[1];
       const specialKeywords={
         "北京":'2.3.2.2 北京地区新版纸质营业执照，签发日期在2019年3月22日之后的，公章内登记机关均表示为：北京市XX区市场监督管理局。如在该日期后公章内容出现其他表述，如"北京市工商行政管理局XX分局"，则为伪造。',
@@ -166,12 +164,6 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
             break;
           }
         }
-      }
-      if(element&&element.textContent){
-        keywords.forEach(kw=>{
-          if(element.textContent.includes(kw))
-            element.innerHTML=element.innerHTML.replace(new RegExp(kw,"g"),"<span style='background-color:yellow'>"+kw+"</span>");
-        });
       }
       if(e2&&e2.textContent){
         k2s.forEach(kw=>{
