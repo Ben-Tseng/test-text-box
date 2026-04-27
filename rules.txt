@@ -2,15 +2,9 @@
 
 (function(){   function findAndClickTargets(doc) {     try {       const links = Array.from(doc.querySelectorAll("a"));       let found = false;        const bivLink = links.find(link => link.textContent.trim().includes("BIV"));       if (bivLink) {         bivLink.click();         console.log("✅ BIV clicked");         found = true;       }        const idvLink = links.find(link => link.textContent.trim().includes("IDV"));       if (idvLink) {         idvLink.click();         console.log("✅ IDV-BO-LR-POC clicked");         found = true;       }        const workflowLink = links.find(link =>         link.textContent.trim().includes("Workflow History For CID")       );       if (workflowLink) {         workflowLink.click();         console.log("✅ Workflow History clicked");         found = true;       }        return found;     } catch (e) {       console.log("❌ Error finding links:", e);     }     return false;   }    function searchAllFrames(win) {     try {       if (findAndClickTargets(win.document)) return true;       for (let i = 0; i < win.frames.length; i++) {         try {           if (searchAllFrames(win.frames[i])) return true;         } catch (err) {}       }     } catch (err) {}     return false;   }    const success = searchAllFrames(window);   if (!success) {   return  } })();
 
-2.click Assign:
+2.click All doc:
 
-const buttons =document.querySelectorAll('button');
-for(let button of buttons){
-	if(button.textContent.includes('Assign to Me')){
-			button.click();
-			break
-  }
-}
+(function(){let r=[];(function s(d){d.querySelectorAll('a').forEach(a=>{a.textContent.includes('All Documents')&&r.push(a)});d.querySelectorAll('iframe').forEach(f=>{try{let c=f.contentDocument||f.contentWindow?.document;c&&s(c)}catch(e){}})})(document);r[0]?r[0].click():console.log('未找到');})();
 
 3.All click:
 
