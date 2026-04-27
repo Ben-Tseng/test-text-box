@@ -19,3 +19,267 @@ for(let button of buttons){
 
 4.i2v fail
 javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.frames.length;i++){try{g(w.frames[i],d)}catch(e){}}}catch(e){}return d}function p(doc){try{doc.querySelectorAll('input[value="calypso_answer_positive"]').forEach(e=>e.click())}catch(e){}}function f(doc,t){const l=[...doc.querySelectorAll("label")].find(e=>e.textContent.trim()===t);if(!l)return"";let n=l.parentElement;while(n){const f=n.querySelectorAll("input,textarea,select,span,div");for(const e of f){if("value"in e&&e.value&&e.value.trim())return e.value.trim();if(e.textContent&&e.textContent.trim()&&e!==l)return e.textContent.trim()}n=n.parentElement}return""}function a(d){for(const doc of d){const ta=doc.querySelector('textarea[name="annotationText"]')||doc.querySelector('textarea[id="annotationText"]')||doc.querySelector("textarea");if(ta)return ta}return null}function s(el,v){try{const p=Object.getPrototypeOf(el),set=Object.getOwnPropertyDescriptor(p,"value")?.set;if(set)set.call(el,v);else el.value=v}catch(e){el.value=v}el.focus();el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))}function b(d){for(const doc of d){const n=f(doc,"Business Name");if(!n)continue;const ta=a(d);if(!ta)return false;const t=n+' ".overAllRemarks":"Manual Review","overAllOutcome":"Fail",Deny for I2V fail';s(ta,t);return true}return false}async function o(d){const sl=m=>new Promise(r=>setTimeout(r,m));for(const doc of d){try{const r=doc.querySelector('input[value="OTHER"]'),ta=doc.getElementById("calypso_bl_legitimacy_question_calypso_override_other");if(!r||!ta)continue;r.click();r.checked=true;r.dispatchEvent(new Event("input",{bubbles:true}));r.dispatchEvent(new Event("change",{bubbles:true}));await sl(300);s(ta,"i2v fail");return true}catch(e){}}return false}function r(doc,d){const n=doc.querySelector('label[for="calypso_bl_legitimacy_question_calypso_answer_negative"]');if(n)n.click();setTimeout(()=>{const o=doc.querySelector('label[for="calypso_bl_legitimacy_question_calypso_override_other"]');if(o)o.click()},300);setTimeout(()=>{o(d)},700);setTimeout(()=>{const f=doc.querySelector('label[for="calypso_na_biv_final_question_outcome_calypso_answer_fail"]');if(f)f.click()},1100);setTimeout(()=>{b(d)},1400)}function m(){const d=g(window,[]);for(const doc of d)p(doc);for(const doc of d)r(doc,d)}m()})();
+
+
+// super bowl
+(()=>{
+  // ── 工具函数（不变）──────────────────────────────────────
+  function e(t, n=[]) {
+    try {
+      t.document && n.push(t.document);
+      for (let o=0; o<t.frames.length; o++) e(t.frames[o], n);
+    } catch(o) {}
+    return n;
+  }
+
+  function t(e) {
+    try {
+      const t = e.querySelectorAll('input[value="calypso_answer_positive"]');
+      t.forEach(e => e.click());
+      return t.length;
+    } catch(n) { return 0; }
+  }
+
+  function n(e) {
+    const t = e.querySelector("h2.navbar-brand");
+    return t ? t.textContent.trim() : "";
+  }
+
+  function o(e, t) {
+    const n = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+    n ? n.call(e, t) : e.value = t;
+    e.dispatchEvent(new Event("input", {bubbles: !0}));
+    e.dispatchEvent(new Event("change", {bubbles: !0}));
+  }
+
+  function r(e, t) {
+    const n = [...e.querySelectorAll(".no-side-padding, div, span, label")]
+      .find(e => (e.textContent || "").trim() === t);
+    if (!n) return null;
+    const o = n.closest(".row") || n.parentElement;
+    if (!o) return null;
+    const r = o.querySelector(".normal-input strong") ||
+              o.querySelector(".normal-input") ||
+              o.querySelector("strong");
+    return r ? r.textContent.trim() : null;
+  }
+
+  function i(e) {
+    for (const t of e) {
+      const e = t.querySelector("#annotationText") ||
+                t.querySelector('textarea[name="annotationText"]') ||
+                t.querySelector('textarea[placeholder="Enter annotations"]');
+      if (e) return e;
+    }
+    return null;
+  }
+
+  // ── 新增：读取 IPV textarea 并判断 ARVT 结果 ─────────────
+  function getArvtResult(docs) {
+    for (const doc of docs) {
+      // 找图中的 textarea.ipv-annotations-text
+      const ta = doc.querySelector("textarea.ipv-annotations-text");
+      if (!ta) continue;
+
+      const raw = ta.value || ta.textContent || "";
+      if (!raw.trim()) continue;
+
+      const lower = raw.toLowerCase();
+
+      // 判断 overAllOutcome 字段是否含 fail（大小写不敏感）
+      // 正则匹配 "overAllOutcome": "...fail..." 或 "overAllOutcome":"FAIL"
+      const outcomeMatch = raw.match(/"overAllOutcome"\s*:\s*"([^"]+)"/i);
+      const outcome = outcomeMatch ? outcomeMatch[1].toLowerCase() : "";
+
+      const isFail = outcome.includes("fail");
+      const isSkip = lower.includes("skip");
+
+      if (isFail && !isSkip) return "fail";
+      if (isSkip)            return "skip";
+      return "pass";
+    }
+    // 找不到该元素时，默认 pass（不影响已有流程）
+    return "pass";
+  }
+
+  // ── 新增：执行 I2V Fail 时的完整点击序列 ─────────────────
+  function runI2vFailFlow(docs) {
+    const sl = m => new Promise(r => setTimeout(r, m));
+
+    function setVal(el, v) {
+      try {
+        const proto = Object.getPrototypeOf(el);
+        const set = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+        if (set) set.call(el, v); else el.value = v;
+      } catch(e) { el.value = v; }
+      el.focus();
+      el.dispatchEvent(new Event("input",  {bubbles: true}));
+      el.dispatchEvent(new Event("change", {bubbles: true}));
+    }
+
+    async function fillOtherInput(docs) {
+      for (const doc of docs) {
+        try {
+          const radio = doc.querySelector('input[value="OTHER"]');
+          const ta    = doc.getElementById("calypso_bl_legitimacy_question_calypso_override_other");
+          if (!radio || !ta) continue;
+          radio.click();
+          radio.checked = true;
+          radio.dispatchEvent(new Event("input",  {bubbles: true}));
+          radio.dispatchEvent(new Event("change", {bubbles: true}));
+          await sl(300);
+          setVal(ta, "i2v fail");
+          return true;
+        } catch(e) {}
+      }
+      return false;
+    }
+
+    for (const doc of docs) {
+      const negLabel = doc.querySelector(
+        'label[for="calypso_bl_legitimacy_question_calypso_answer_negative"]'
+      );
+      if (!negLabel) continue;
+
+      negLabel.click();
+
+      setTimeout(() => {
+        const overrideLabel = doc.querySelector(
+          'label[for="calypso_bl_legitimacy_question_calypso_override_other"]'
+        );
+        if (overrideLabel) overrideLabel.click();
+      }, 300);
+
+      setTimeout(() => { fillOtherInput(docs); }, 700);
+
+      setTimeout(() => {
+        const failLabel = doc.querySelector(
+          'label[for="calypso_na_biv_final_question_outcome_calypso_answer_fail"]'
+        );
+        if (failLabel) failLabel.click();
+      }, 1100);
+
+      break; // 只处理第一个匹配的 doc
+    }
+  }
+
+  // ── c()：Business Verification（含 ARVT 逻辑）────────────
+  function c(docs) {
+    // 1. 找到 Business Verification 页面
+    const bizDoc = docs.find(d => n(d) === "Business Verification");
+    if (!bizDoc) return false;
+
+    // 2. 读取 Business Name
+    const businessName = r(bizDoc, "Business Name");
+    if (!businessName) return false;
+
+    // 3. 找批注文本框
+    const annotationTA = i(docs);
+    if (!annotationTA) return false;
+
+    // 4. 读取 ARVT 结果（扫描所有 doc 中的 ipv-annotations-text）
+    const arvtResult = getArvtResult(docs);
+
+    // 5. 根据 ARVT 结果拼接追加文字
+    let suffix = "";
+    if (arvtResult === "fail") {
+      suffix = "\nARVT results: Fail；Deny for I2V fail";
+    } else if (arvtResult === "skip") {
+      suffix = "\nARVT results: ID skipped";
+    } else {
+      suffix = "\nARVT results: Pass";
+    }
+
+    // 6. 写入 annotation textarea（Business Name + ARVT 后缀）
+    o(annotationTA, businessName + suffix);
+
+    // 7. 如果是 Fail，额外执行点击流程
+    if (arvtResult === "fail") {
+      runI2vFailFlow(docs);
+    }
+
+    return true;
+  }
+
+  // ── s()：Identity Verification（不变）────────────────────
+  function a(e) {
+    return /^[0-9]{17}[0-9Xx]$/.test(e);
+  }
+
+  function u(e) {
+    const t = e.substring(6, 10),
+          n = e.substring(10, 12),
+          o = e.substring(12, 14);
+    return `${o}/${n}/${t}`;
+  }
+
+  function l(e) {
+    if (!e) return null;
+    const t = e.trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(t)) return t;
+    const n = t.match(/^([A-Za-z]{3})\s+(\d{1,2}),\s+(\d{4})$/);
+    if (n) {
+      const e = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",
+                 Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"}[n[1]],
+            t = String(n[2]).padStart(2, "0"),
+            o = n[3];
+      return e ? `${t}/${e}/${o}` : null;
+    }
+    return null;
+  }
+
+  function d(e) {
+    const t = e.querySelector(
+      'label[for="calypso_idv_verification_question_dob_calypso_answer_negative"]'
+    );
+    t && t.click();
+    setTimeout(() => {
+      const t = e.querySelector(
+        'label[for="calypso_na_idv_final_question_outcome_calypso_answer_request_more_info"]'
+      );
+      t && t.click();
+    }, 300);
+    setTimeout(() => {
+      const t = e.querySelector(
+        'label[for="calypso_na_idv_final_question_outcome_calypso_rfi_date_of_birth"]'
+      );
+      t && t.click();
+    }, 600);
+  }
+
+  function s(docs) {
+    const targetDoc = docs.find(d => {
+      const title = n(d);
+      return title === "Identity Verification" || title === "Identify Verification";
+    });
+    if (!targetDoc) return false;
+
+    const idNum = r(targetDoc, "ID Number");
+    const dob   = r(targetDoc, "DOB");
+    if (!idNum || !dob) return false;
+
+    if (!a(idNum)) return true; // 非 18 位，跳过
+
+    const idDob = u(idNum);
+    const formDob = l(dob);
+    if (!formDob) return false;
+
+    if (idDob === formDob) {
+      const dobEl = [...targetDoc.querySelectorAll(".no-side-padding, div, span, label")]
+        .find(e => (e.textContent || "").trim() === "DOB");
+      const row = dobEl?.closest(".row") || dobEl?.parentElement;
+      const strong = row?.querySelector(".normal-input strong");
+      if (strong) strong.style.backgroundColor = "yellow";
+      return true;
+    }
+
+    d(targetDoc);
+    return true;
+  }
+
+  // ── 入口 ─────────────────────────────────────────────────
+  const docs = e(window);
+  docs.forEach(doc => t(doc));
+  c(docs);
+  s(docs);
+})();
