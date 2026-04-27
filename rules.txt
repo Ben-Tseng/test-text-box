@@ -173,6 +173,79 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
     const businessName = r(bizDoc, "Business Name");
     if (!businessName) return false;
 
+	// ── 新增：执行关键词高亮与提示 ──────────────────────────
+    function highlightKeywords() {
+        const keywords = ["宜昌","襄阳","阳江","郫都区","厦门","广州","上海","江苏","江西","合肥","成都","武侯","珠海","内蒙","北京","武汉","深圳"];
+        const k2s = ["宜昌","襄阳","阳江","厦门","广州","上海","海口","合肥","成都","武侯","珠海","内蒙","北京","武汉","南京","苏州","无锡","常州","扬州","镇江","南通","盐城","徐州","连云港","淮安","宿迁","泰州","南昌","九江","景德镇","萍乡","新余","鹰潭","赣州","吉安","宜春","抚州","上饶","深圳","河南","昆明"];
+        const element = document.querySelectorAll('strong')[5];
+        const e2 = document.querySelectorAll('strong')[1];
+        const specialKeywords = {
+            "北京": "2.3.2.2 北京地区新版纸质营业执照，签发日期在2019年3月22日之后的，公章内登记机关均表示为：北京市XX区市场监督管理局。如在该日期后公章内容出现其他表述，如"北京市工商行政管理局XX分局"，则为伪造。",
+            "唐山": "2.3.3.1 河北省唐山市滦州市注册资本大写金额没有带上数字，则为伪造。",
+            "内蒙": "2.3.4.1 内蒙古自治区签发的营业执照文件，如果没有普通话和蒙古语两种名称，则为伪造。",
+            "合肥": "2.5.4.1 公司类型为"有限责任公司"，且住所位于市辖区(蜀山/瑶海/庐阳/包河区)时，若公章内签发机构不是"合肥市市场监督管理局"，则为伪造。",
+            "厦门": "2.5.5.1 厦门地区纸质版营业执照的经营范围如果显示出具体的经营项目，则为伪造。",
+            "淄博": "2.5.9.1 山东省淄博经济开发区营业执照注册资本大写金额没有带上数字，则为伪造。",
+            "青岛": "2.5.10.1 山东省青岛市营业执照若注册资本为10万元，文字内容未写为"壹拾万元整"，则为伪造。",
+            "泉州": "2.5.7.1 福建省泉州市丰泽区纸质版营业执照上的文字出现"注册资金"，则为伪造。",
+            "周口": "2.6.1.1 河南省周口市纸质版营业执照上的文字出现"注册资金"，则为伪造。",
+            "宜昌": "2.6.2.1 湖北省宜昌市纸质版营业执照如果公章内写的"市场监督管理局"简称为"市场监管局"，则为伪造。",
+            "广州": `2.7.1.1 广州地区纸质版营业执照文本信息内不含有以"编号"开头的文件编号，或对"编号"使用其他文字表述，则为伪造。
+            2.7.1.2 广州地区纸质版营业执照的经营范围如果显示出具体经营项目，则为伪造。`,
+            "深圳": "2.7.3.1 深圳市纸质版营业执照文本信息含有"注册资本"、"经营范围"、"营业期限"，则为伪造。",
+            "珠海": "2.7.6.1 珠海地区纸质版营业执照文本信息内如果提及经营范围、注册资本，则为伪造。",
+            "成都": `2.8.1.1 成都市高新区颁发的营业执照，签发日期2019年6月1日前：加盖公章文本信息不是"成都市工商行政管理局"、"成都市市场监督管理局"或"成都高新区市场和质量监督管理局"，则为伪造。
+            签发日期2019年6月1日及之后：加盖公章文本信息不是"成都高新技术产业开发区市场监督管理局"，则为伪造。
+            2.8.1.2 成都市锦江区颁发的营业执照
+            签发日期2019年8月1日前：加盖公章文本信息不是  "成都市锦江区市场和质量监督管理局" 、"成都市锦江区市场监督管理局"或"成都市锦江区行政审批局" ，则为伪造。
+            签发日期2019年8月1日及之后：加盖公章文本信息不是"成都市锦江区行政审批局"，则为伪造【例外】外国法人独资类型企业除外。
+            2.8.2.1 成都市武侯区新版营业执照，若上方没有武侯区证照公示系统+网址以及查询代码+条形码，则为伪造。`,
+            "西安": "2.9.1.1 陕西省西安市新版营业执照，若二维码上方出现编号则为伪造。",
+            "海口": "D142815379:凹凸不平的黑色地砖,SECE省份与NID省份一致,ickname:法人名拼音+(123)+( .),无关联拼音+（字母）+数字@163.com。",
+            "东莞": "D43520784:虎门+白纸背景,身份证:云南省+白墙/黑龙江+灰白墙.P137073741:花灯的深蓝色夜景画+注册资本： 人民币壹佰万元",
+            "昆明": "D113859303:五华区+色小碎石和白色小点的灰白背景,无关联拼音+字母+数字@163.com+4608 X 3456/乱码@163.com+5712 X 4284",
+            "上海": '2.5.1.1 上海地区纸质版营业执照文本信息内不含有"证照编号"，或出现"证件编号"等其他表述方式，则为伪造2.5.1.2 上海市松江区纸质营业执照公章内写的不是"上海市松江区市场监督管理局"，则为伪造,外商投资类型企业除外2.5.1.3 上海市崇明区、上海自由贸易试验区纸质版营业执照若公章内将"市场监督管理局"简写为 "市场监管局"，则为伪造',
+            "莆田": "P72810851:城厢区/荔城区新版营业执照 + 米白大理石背景",
+        };
+
+        if (e2 && e2.textContent) {
+            for (const [keyword, message] of Object.entries(specialKeywords)) {
+                if (e2.textContent.includes(keyword)) {
+                    const alertContainer = document.createElement('div');
+                    alertContainer.style.border = '1px solid red';
+                    alertContainer.style.padding = '10px';
+                    alertContainer.style.marginTop = '10px';
+                    alertContainer.style.backgroundColor = '#f8d7da';
+                    alertContainer.style.color = '#721c24';
+                    alertContainer.style.width = '100%';
+                    alertContainer.innerHTML = `<strong>提示:</strong> ${message}`;
+                    e2.insertAdjacentElement('afterend', alertContainer);
+                    break;
+                }
+            }
+        }
+
+        if (element && element.textContent) {
+            keywords.forEach(keyword => {
+                if (element.textContent.includes(keyword)) {
+                    element.innerHTML = element.innerHTML.replace(new RegExp(keyword, 'g'), `<span style='background-color: yellow'>${keyword}</span>`);
+                }
+            });
+        }
+
+        if (e2 && e2.textContent) {
+            k2s.forEach(k2 => {
+                if (e2.textContent.includes(k2)) {
+                    e2.innerHTML = e2.innerHTML.replace(new RegExp(k2, 'g'), `<span style='background-color: yellow'>${k2}</span>`);
+                }
+            });
+        }
+    }
+    highlightKeywords();
+    // ── 高亮结束 ─────────────────────────────────────────────
+
+
+
     // 3. 找批注文本框
     const annotationTA = i(docs);
     if (!annotationTA) return false;
