@@ -351,7 +351,7 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
 
     function highlightKeywords(){
       const element=bizDoc.querySelector('div.sop-section-header-div.col-md-12 > h3.sop-section-header.col-md-6');
-      const k2s=['宜昌','襄阳','阳江','厦门','广州','上海','海口','合肥','成都','武侯','珠海','内蒙','北京','武汉','南京','苏州','无锡','常州','扬州','镇江','南通','盐城','徐州','连云港','淮安','宿迁','泰州','南昌','九江','景德镇','萍乡','新余','鹰潭','赣州','吉安','宜春','抚州','上饶','深圳','河南','昆明'];
+      const k2s=['宜昌','襄阳','东莞','厦门','广州','上海','海口','合肥','成都','武侯','珠海','内蒙','北京','武汉','南京','苏州','无锡','常州','扬州','镇江','南通','盐城','徐州','连云港','淮安','宿迁','泰州','南昌','九江','景德镇','萍乡','新余','鹰潭','赣州','吉安','宜春','抚州','上饶','深圳','河南','昆明'];
       const e2=bizDoc.querySelectorAll('strong')[1];
       const specialKeywords={
         '北京':'2.3.2.2 北京地区新版纸质营业执照，签发日期在2019年3月22日之后的，公章内登记机关均表示为：北京市XX区市场监督管理局。如在该日期后公章内容出现其他表述，如"北京市工商行政管理局XX分局"，则为伪造。',
@@ -393,9 +393,20 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
           if(e2.textContent.includes(keyword)){
             const box=bizDoc.createElement('div');
             box.className='alert-reminder';
-            box.style.cssText='border:1px solid red;padding:10px;margin-top:10px;background-color:#f8d7da;color:#721c24;width:100%';
+            box.style.position='fixed';
+            box.style.top='10px';
+            box.style.left='50%';
+            box.style.transform='translateX(-50%)';
+            box.style.width='80vw';
+            box.style.border='1px solid red';
+            box.style.padding='10px';
+            box.style.backgroundColor='#f8d7da';
+            box.style.color='#721c24';
+            box.style.zIndex='9999';
+            box.style.maxHeight='200px';
+            box.style.overflowY='auto';
             box.innerHTML='<strong>提示:</strong> '+message;
-            e2.insertAdjacentElement('afterend',box);
+            bizDoc.body.appendChild(box);
             redBoxInserted=true;
             break;
           }
@@ -405,18 +416,20 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
       if(element&&!bizDoc.querySelector('.general-alert-reminder')){
         const generalAlert=bizDoc.createElement('div');
         generalAlert.className='general-alert-reminder';
-        generalAlert.style.cssText='border:1px solid blue;padding:10px;margin-top:10px;background-color:#d1ecf1;color:#0c5460;width:100%';
+        generalAlert.style.position='fixed';
+        generalAlert.style.top=redBoxInserted?'230px':'10px';
+        generalAlert.style.left='50%';
+        generalAlert.style.transform='translateX(-50%)';
+        generalAlert.style.width='80vw';
+        generalAlert.style.border='1px solid blue';
+        generalAlert.style.padding='10px';
+        generalAlert.style.backgroundColor='#d1ecf1';
+        generalAlert.style.color='#0c5460';
+        generalAlert.style.zIndex='9999';
+        generalAlert.style.maxHeight='300px';
+        generalAlert.style.overflowY='auto';
         generalAlert.innerHTML='<strong>通用提示:</strong><br>'+generalMessage;
-        if(redBoxInserted&&e2){
-          const redBox=e2.nextElementSibling;
-          if(redBox&&redBox.classList.contains('alert-reminder')){
-            redBox.insertAdjacentElement('afterend',generalAlert);
-          }else{
-            element.insertAdjacentElement('afterend',generalAlert);
-          }
-        }else{
-          element.insertAdjacentElement('afterend',generalAlert);
-        }
+        bizDoc.body.appendChild(generalAlert);
       }
 
       if(e2&&e2.textContent){
