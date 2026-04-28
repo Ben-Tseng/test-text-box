@@ -81,3 +81,106 @@ function clickShadowElement(labelName) {
 // 执行点击
 clickShadowElement('PERSONA_BUSINESS_LICENSE');
 
+
+
+
+
+
+
+
+(()=>{
+  function getAllDocs(w, d=[]) {
+    try {
+      w.document && d.push(w.document);
+      for (let i=0; i<w.frames.length; i++) getAllDocs(w.frames[i], d);
+    } catch(e) {}
+    return d;
+  }
+
+  function getPageTitle(doc) {
+    const t = doc.querySelector("h2.navbar-brand");
+    return t ? t.textContent.trim() : "";
+  }
+
+  function clickAllDocuments(doc) {
+    let found = [];
+    (function scan(d) {
+      d.querySelectorAll('a').forEach(a => {
+        a.textContent.includes('All Documents') && found.push(a);
+      });
+      d.querySelectorAll('iframe').forEach(f => {
+        try {
+          const c = f.contentDocument || f.contentWindow?.document;
+          c && scan(c);
+        } catch(e) {}
+      });
+    })(doc);
+    if (found[0]) {
+      found[0].click();
+      return true;
+    }
+    console.log('未找到 All Documents');
+    return false;
+  }
+
+  function findInShadow(root, selector) {
+    const found = root.querySelector(selector);
+    if (found) return found;
+    const children = root.querySelectorAll('*');
+    for (let child of children) {
+      if (child.shadowRoot) {
+        const result = findInShadow(child.shadowRoot, selector);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+
+  function clickShadowElement(labelName) {
+    const targetHost = findInShadow(document, `kat-button[label="${labelName}"]`);
+    if (targetHost && targetHost.shadowRoot) {
+      const realButton = targetHost.shadowRoot.querySelector('button.button');
+      if (realButton) {
+        realButton.click();
+        console.log('✅ 成功触发点击:', labelName);
+      } else {
+        console.error('❌ 找到了宿主，但内部 button 没找到');
+      }
+    } else {
+      console.error('❌ 未找到匹配 label 的 kat-button 元素');
+    }
+  }
+
+  function runForPage(labelName, docs) {
+    // 先点 All Documents
+    let clicked = false;
+    for (const doc of docs) {
+      if (clickAllDocuments(doc)) { clicked = true; break; }
+    }
+    if (!clicked) return;
+
+    // 等待新页面加载后执行 clickShadowElement
+    setTimeout(() => clickShadowElement(labelName), 1500);
+  }
+
+  // ── 入口：检测页面类型 ────────────────────────────────────
+  const docs = getAllDocs(window);
+
+  let pageType = null;
+  for (const doc of docs) {
+    const title = getPageTitle(doc);
+    if (title === "Business Verification") { pageType = "business"; break; }
+    if (title === "Identity Verification" || title === "Identify Verification") { pageType = "identity"; break; }
+  }
+
+  if (pageType === "business") {
+    console.log("📄 检测到 Business Verification");
+    runForPage("PERSONA_BUSINESS_LICENSE", docs);
+  } else if (pageType === "identity") {
+    console.log("📄 检测到 Identity Verification");
+    runForPage("PERSONA_ID_DOCUMENT", docs);
+  } else {
+    console.log("⚠️ 未检测到匹配页面");
+  }
+})();
+
