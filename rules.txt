@@ -493,14 +493,21 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
       const row=dobEl?.closest(".row")||dobEl?.parentElement;
       const strong=row?.querySelector(".normal-input strong");
       if(strong)strong.style.backgroundColor="yellow";
+
       //add
       const verifiedLabel=Array.from(targetDoc.querySelectorAll('label')).find(el=>el.textContent.trim()==='Verified');
       if(verifiedLabel)verifiedLabel.click();
+
       return true;
     }
     d(targetDoc);
+
     // add
-    
+    setTimeout(()=>{                    
+      const annotationTA=i(docs);
+      if(annotationTA)o(annotationTA,"RFD ID for DOB.");
+    },1600);
+
     return true;
   }
   const docs=e(window);
