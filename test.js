@@ -41,3 +41,43 @@ if (katButton && katButton.shadowRoot) {
 }
 
 document.querySelector('kat-button[label="PERSONA_BUSINESS_LICENSE"]').click();
+
+
+
+
+function clickShadowElement(labelName) {
+    // 递归函数：在元素及其所有 shadowRoot 中查找
+    function findInShadow(root, selector) {
+        const found = root.querySelector(selector);
+        if (found) return found;
+
+        const children = root.querySelectorAll('*');
+        for (let child of children) {
+            if (child.shadowRoot) {
+                const result = findInShadow(child.shadowRoot, selector);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
+
+    // 1. 先找到那个自定义的 kat-button
+    const targetHost = findInShadow(document, `kat-button[label="${labelName}"]`);
+    
+    if (targetHost && targetHost.shadowRoot) {
+        // 2. 找到它内部真正的 button 元素
+        const realButton = targetHost.shadowRoot.querySelector('button.button');
+        if (realButton) {
+            realButton.click();
+            console.log('✅ 成功触发点击:', labelName);
+        } else {
+            console.error('❌ 找到了宿主，但内部 button 没找到');
+        }
+    } else {
+        console.error('❌ 未找到匹配 label 的 kat-button 元素');
+    }
+}
+
+// 执行点击
+clickShadowElement('PERSONA_BUSINESS_LICENSE');
+
