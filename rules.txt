@@ -515,3 +515,50 @@ javascript:(function(){function g(w,d){try{d.push(w.document);for(let i=0;i<w.fr
   c(docs);
   s(docs);
 })();
+
+
+
+
+// All doc 
+function findInAllFrames(labelName) {
+    // 穿透 Shadow DOM 的逻辑
+    function findInShadow(root, selector) {
+        const found = root.querySelector(selector);
+        if (found) return found;
+        const children = root.querySelectorAll('*');
+        for (let child of children) {
+            if (child.shadowRoot) {
+                const result = findInShadow(child.shadowRoot, selector);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
+
+    // 1. 先在主页面找
+    let target = findInShadow(document, `kat-button[label="${labelName}"]`);
+    if (target) return target;
+
+    // 2. 遍历所有 iframe 找
+    const frames = document.querySelectorAll('iframe');
+    for (let frame of frames) {
+        try {
+            // 注意：如果 iframe 跨域，此处会报错并跳过
+            const frameDoc = frame.contentDocument || frame.contentWindow.document;
+            target = findInShadow(frameDoc, `kat-button[label="${labelName}"]`);
+            if (target) return target;
+        } catch (e) {
+            console.warn("无法进入 iframe (可能是跨域限制):", frame.src);
+        }
+    }
+    return null;
+}
+
+// 执行点击逻辑
+const btnHost = findInAllFrames('PERSONA_ID_DOCUMENT');
+if (btnHost && btnHost.shadowRoot) {
+    btnHost.shadowRoot.querySelector('button').click();
+    console.log("✅ 跨 Iframe 点击成功");
+} else {
+    console.error("❌ 依然找不到元素，请检查 Iframe 是否跨域或元素尚未加载");
+}
