@@ -25,3 +25,5 @@ if (allDocsBtn) {
 
 // 查找页面上所有 label，点击文本包含 "Verified" 的那一个
 Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Verified').click();
+
+document.getElementById('calypso_na_idv_final_question_outcome_calypso_answer_pass').click();
