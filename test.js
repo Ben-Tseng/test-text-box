@@ -27,3 +27,6 @@ if (allDocsBtn) {
 Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Verified').click();
 
 document.getElementById('calypso_na_idv_final_question_outcome_calypso_answer_pass').click();
+
+const verifiedLabel=Array.from(targetDoc.querySelectorAll('label')).find(el=>el.textContent.trim()==='Verified');
+if(verifiedLabel)verifiedLabel.click();
