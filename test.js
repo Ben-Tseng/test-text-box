@@ -217,13 +217,10 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
 
 
 /**
- * 自动等待并点击 Shadow DOM 元素
- * @param {string} labelName 目标标签名
- * @param {number} timeout 最大等待时间(ms)
+ * 跨 Iframe 且穿透 Shadow DOM 的搜索函数
  */
-function autoClickShadowElement(labelName, timeout = 10000) {
-    const startTime = Date.now();
-
+function findInAllFrames(labelName) {
+    // 穿透 Shadow DOM 的逻辑
     function findInShadow(root, selector) {
         const found = root.querySelector(selector);
         if (found) return found;
@@ -237,28 +234,30 @@ function autoClickShadowElement(labelName, timeout = 10000) {
         return null;
     }
 
-    const timer = setInterval(() => {
-        // 1. 尝试寻找宿主
-        const targetHost = findInShadow(document, `kat-button[label="${labelName}"]`);
-        
-        if (targetHost && targetHost.shadowRoot) {
-            // 2. 尝试寻找内部按钮
-            const realButton = targetHost.shadowRoot.querySelector('button.button');
-            if (realButton) {
-                realButton.click();
-                console.log(`✅ 成功点击: ${labelName}`);
-                clearInterval(timer);
-                return;
-            }
-        }
+    // 1. 先在主页面找
+    let target = findInShadow(document, `kat-button[label="${labelName}"]`);
+    if (target) return target;
 
-        // 检查是否超时
-        if (Date.now() - startTime > timeout) {
-            console.error(`❌ 等待超时：在 ${timeout/1000}s 内未找到元素 "${labelName}"。请确认元素是否已展开或 label 是否正确。`);
-            clearInterval(timer);
+    // 2. 遍历所有 iframe 找
+    const frames = document.querySelectorAll('iframe');
+    for (let frame of frames) {
+        try {
+            // 注意：如果 iframe 跨域，此处会报错并跳过
+            const frameDoc = frame.contentDocument || frame.contentWindow.document;
+            target = findInShadow(frameDoc, `kat-button[label="${labelName}"]`);
+            if (target) return target;
+        } catch (e) {
+            console.warn("无法进入 iframe (可能是跨域限制):", frame.src);
         }
-    }, 500); // 每 500ms 检查一次
+    }
+    return null;
 }
 
-// 执行（尝试等待 10 秒）
-autoClickShadowElement('PERSONA_BUSINESS_LICENSE');
+// 执行点击逻辑
+const btnHost = findInAllFrames('PERSONA_BUSINESS_LICENSE');
+if (btnHost && btnHost.shadowRoot) {
+    btnHost.shadowRoot.querySelector('button').click();
+    console.log("✅ 跨 Iframe 点击成功");
+} else {
+    console.error("❌ 依然找不到元素，请检查 Iframe 是否跨域或元素尚未加载");
+}
