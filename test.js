@@ -214,3 +214,6 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
   }
 })();
 
+
+
+javascript:(function(){ function findInShadow(r,s){let f=r.querySelector(s);if(f)return f;for(let c of r.querySelectorAll('*')){if(c.shadowRoot){let res=findInShadow(c.shadowRoot,s);if(res)return res}}return null;} let t=findInShadow(document,'kat-button[label="PERSONA_BUSINESS_LICENSE"]'); if(t&&t.shadowRoot){t.shadowRoot.querySelector('button.button').click();console.log('Done');}else{alert('未找到元素，请确认页面已加载完毕');} })();
