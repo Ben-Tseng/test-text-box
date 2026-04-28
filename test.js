@@ -23,15 +23,21 @@ if (allDocsBtn) {
 (function(){let r=[];(function s(d){d.querySelectorAll('a').forEach(a=>{a.textContent.includes('All Documents')&&r.push(a)});d.querySelectorAll('iframe').forEach(f=>{try{let c=f.contentDocument||f.contentWindow?.document;c&&s(c)}catch(e){}})})(document);r[0]?r[0].click():console.log('未找到');})();
 
 
-// 查找页面上所有 label，点击文本包含 "Verified" 的那一个
-Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Verified').click();
+// 1. 找到对应的自定义组件元素
+// 这里使用了 label 属性作为特征定位
+const katButton = document.querySelector('kat-button[label="PERSONA_BUSINESS_LICENSE"]');
 
-document.getElementById('calypso_na_idv_final_question_outcome_calypso_answer_pass').click();
+if (katButton && katButton.shadowRoot) {
+    // 2. 进入 shadowRoot 寻找内部的 button 元素
+    const innerButton = katButton.shadowRoot.querySelector('button.button');
+    if (innerButton) {
+        innerButton.click();
+        console.log("成功点击按钮");
+    } else {
+        console.log("未找到 Shadow DOM 内部的按钮");
+    }
+} else {
+    console.log("未找到 kat-button 元素或 shadowRoot 未开放");
+}
 
-const verifiedLabel=Array.from(targetDoc.querySelectorAll('label')).find(el=>el.textContent.trim()==='Verified');
-if(verifiedLabel)verifiedLabel.click();
-
-setTimeout(()=>{                    
-  const annotationTA=i(docs);
-  if(annotationTA)o(annotationTA,"RFD ID for DOB.");
-},1600);
+document.querySelector('kat-button[label="PERSONA_BUSINESS_LICENSE"]').click();
