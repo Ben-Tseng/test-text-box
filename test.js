@@ -21,3 +21,7 @@ if (allDocsBtn) {
 
 // 精简版 - 直接复制使用
 (function(){let r=[];(function s(d){d.querySelectorAll('a').forEach(a=>{a.textContent.includes('All Documents')&&r.push(a)});d.querySelectorAll('iframe').forEach(f=>{try{let c=f.contentDocument||f.contentWindow?.document;c&&s(c)}catch(e){}})})(document);r[0]?r[0].click():console.log('未找到');})();
+
+
+// 查找页面上所有 label，点击文本包含 "Verified" 的那一个
+Array.from(document.querySelectorAll('label')).find(el => el.textContent.trim() === 'Verified').click();
