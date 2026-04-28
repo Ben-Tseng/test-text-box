@@ -115,10 +115,7 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
         } catch(e) {}
       });
     })(doc);
-    if (found[0]) {
-      found[0].click();
-      return true;
-    }
+    if (found[0]) { found[0].click(); return true; }
     console.log('未找到 All Documents');
     return false;
   }
@@ -126,8 +123,7 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
   function findInShadow(root, selector) {
     const found = root.querySelector(selector);
     if (found) return found;
-    const children = root.querySelectorAll('*');
-    for (let child of children) {
+    for (let child of root.querySelectorAll('*')) {
       if (child.shadowRoot) {
         const result = findInShadow(child.shadowRoot, selector);
         if (result) return result;
@@ -136,34 +132,68 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
     return null;
   }
 
-  function clickShadowElement(labelName) {
-    const targetHost = findInShadow(document, `kat-button[label="${labelName}"]`);
-    if (targetHost && targetHost.shadowRoot) {
-      const realButton = targetHost.shadowRoot.querySelector('button.button');
-      if (realButton) {
-        realButton.click();
-        console.log('✅ 成功触发点击:', labelName);
-      } else {
-        console.error('❌ 找到了宿主，但内部 button 没找到');
+  function clickShadowElement(targetWindow, labelName) {
+    const targetDoc = targetWindow.document;
+
+    function attempt(remaining) {
+      const targetHost = findInShadow(targetDoc, `kat-button[label="${labelName}"]`);
+      if (targetHost && targetHost.shadowRoot) {
+        const realButton = targetHost.shadowRoot.querySelector('button.button');
+        if (realButton) {
+          realButton.click();
+          console.log('✅ 成功触发点击:', labelName);
+          return;
+        }
       }
-    } else {
-      console.error('❌ 未找到匹配 label 的 kat-button 元素');
+      if (remaining > 0) {
+        console.log(`⏳ 未找到 ${labelName}，500ms 后重试，剩余次数: ${remaining}`);
+        setTimeout(() => attempt(remaining - 1), 500);
+      } else {
+        console.error('❌ 多次重试后仍未找到:', labelName);
+      }
     }
+
+    attempt(10); // 最多重试10次，共约5秒
   }
 
-  function runForPage(labelName, docs) {
-    // 先点 All Documents
+  function openAndClick(labelName, docs) {
+    // 拦截 window.open，捕获新 tab 的引用
+    const originalOpen = window.open;
+    let newTabRef = null;
+
+    window.open = function(...args) {
+      newTabRef = originalOpen.apply(window, args);
+      window.open = originalOpen; // 还原
+      return newTabRef;
+    };
+
+    // 同时监听 a[target=_blank] 的情况
     let clicked = false;
     for (const doc of docs) {
       if (clickAllDocuments(doc)) { clicked = true; break; }
     }
     if (!clicked) return;
 
-    // 等待新页面加载后执行 clickShadowElement
-    setTimeout(() => clickShadowElement(labelName), 1500);
+    // 等待新 tab 加载
+    const checkTab = setInterval(() => {
+      try {
+        if (newTabRef && newTabRef.document && newTabRef.document.readyState === 'complete') {
+          clearInterval(checkTab);
+          console.log('✅ 新 tab 加载完成，开始查找元素');
+          clickShadowElement(newTabRef, labelName);
+        }
+      } catch(e) {
+        // 跨域时无法访问，停止尝试
+        clearInterval(checkTab);
+        console.error('❌ 无法访问新 tab（可能跨域）:', e);
+      }
+    }, 300);
+
+    // 超时保护：10秒后停止等待
+    setTimeout(() => clearInterval(checkTab), 10000);
   }
 
-  // ── 入口：检测页面类型 ────────────────────────────────────
+  // ── 入口 ─────────────────────────────────────────────────
   const docs = getAllDocs(window);
 
   let pageType = null;
@@ -175,10 +205,10 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
 
   if (pageType === "business") {
     console.log("📄 检测到 Business Verification");
-    runForPage("PERSONA_BUSINESS_LICENSE", docs);
+    openAndClick("PERSONA_BUSINESS_LICENSE", docs);
   } else if (pageType === "identity") {
     console.log("📄 检测到 Identity Verification");
-    runForPage("PERSONA_ID_DOCUMENT", docs);
+    openAndClick("PERSONA_ID_DOCUMENT", docs);
   } else {
     console.log("⚠️ 未检测到匹配页面");
   }
