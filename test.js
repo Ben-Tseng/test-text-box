@@ -216,4 +216,49 @@ clickShadowElement('PERSONA_BUSINESS_LICENSE');
 
 
 
-javascript:(function(){ function findInShadow(r,s){let f=r.querySelector(s);if(f)return f;for(let c of r.querySelectorAll('*')){if(c.shadowRoot){let res=findInShadow(c.shadowRoot,s);if(res)return res}}return null;} let t=findInShadow(document,'kat-button[label="PERSONA_BUSINESS_LICENSE"]'); if(t&&t.shadowRoot){t.shadowRoot.querySelector('button.button').click();console.log('Done');}else{alert('未找到元素，请确认页面已加载完毕');} })();
+/**
+ * 自动等待并点击 Shadow DOM 元素
+ * @param {string} labelName 目标标签名
+ * @param {number} timeout 最大等待时间(ms)
+ */
+function autoClickShadowElement(labelName, timeout = 10000) {
+    const startTime = Date.now();
+
+    function findInShadow(root, selector) {
+        const found = root.querySelector(selector);
+        if (found) return found;
+        const children = root.querySelectorAll('*');
+        for (let child of children) {
+            if (child.shadowRoot) {
+                const result = findInShadow(child.shadowRoot, selector);
+                if (result) return result;
+            }
+        }
+        return null;
+    }
+
+    const timer = setInterval(() => {
+        // 1. 尝试寻找宿主
+        const targetHost = findInShadow(document, `kat-button[label="${labelName}"]`);
+        
+        if (targetHost && targetHost.shadowRoot) {
+            // 2. 尝试寻找内部按钮
+            const realButton = targetHost.shadowRoot.querySelector('button.button');
+            if (realButton) {
+                realButton.click();
+                console.log(`✅ 成功点击: ${labelName}`);
+                clearInterval(timer);
+                return;
+            }
+        }
+
+        // 检查是否超时
+        if (Date.now() - startTime > timeout) {
+            console.error(`❌ 等待超时：在 ${timeout/1000}s 内未找到元素 "${labelName}"。请确认元素是否已展开或 label 是否正确。`);
+            clearInterval(timer);
+        }
+    }, 500); // 每 500ms 检查一次
+}
+
+// 执行（尝试等待 10 秒）
+autoClickShadowElement('PERSONA_BUSINESS_LICENSE');
