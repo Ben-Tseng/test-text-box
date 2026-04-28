@@ -30,3 +30,7 @@ document.getElementById('calypso_na_idv_final_question_outcome_calypso_answer_pa
 
 const verifiedLabel=Array.from(targetDoc.querySelectorAll('label')).find(el=>el.textContent.trim()==='Verified');
 if(verifiedLabel)verifiedLabel.click();
+
+const annotationTA=i(docs);
+  if(annotationTA)o(annotationTA,"RFD ID for DOB.");
+},1600);
