@@ -44,3 +44,60 @@ function clickButtonsSequentially() {
         }, 2000);     }}
 
 setTimeout(() => {clickButtonsSequentially();},  0.2*1000); 
+
+
+
+
+function runI2vIdentityFailFlow(docs) {
+    const sl = m => new Promise(r => setTimeout(r, m));
+
+    function setVal(el, v) {
+        try {
+            const proto = Object.getPrototypeOf(el);
+            const set = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+            if (set) set.call(el, v); else el.value = v;
+        } catch(e) { el.value = v; }
+        el.focus();
+        el.dispatchEvent(new Event("input",  {bubbles: true}));
+        el.dispatchEvent(new Event("change", {bubbles: true}));
+    }
+
+    async function fillOtherTextarea(docs) {
+        for (const doc of docs) {
+            try {
+                const cb  = doc.querySelector('label[for="calypso_na_siv_idv_legitimacy_question_calypso_override_other"]');
+                const ta  = doc.querySelector('textarea#calypso_na_siv_idv_legitimacy_question_calypso_override_other');
+                if (!cb || !ta) continue;
+                cb.click();
+                await sl(300);
+                setVal(ta, "i2v fail");
+                return true;
+            } catch(e) {}
+        }
+        return false;
+    }
+
+    for (const doc of docs) {
+        // 步骤1：点击 Legitimacy Check → No
+        const negLabel = doc.querySelector(
+            'label[for="calypso_na_siv_idv_legitimacy_question_calypso_answer_negative"]'
+        );
+        if (!negLabel) continue;
+        negLabel.click();
+
+        // 步骤2：300ms 后点击 Other 并填入文本
+        setTimeout(() => { fillOtherTextarea(docs); }, 300);
+
+        // 步骤3：1100ms 后点击最终结果 Fail
+        setTimeout(() => {
+            for (const d of docs) {
+                const failLabel = d.querySelector(
+                    'label[for="calypso_na_idv_final_question_outcome_calypso_answer_fail"]'
+                );
+                if (failLabel) { failLabel.click(); break; }
+            }
+        }, 1100);
+
+        break;
+    }
+}
