@@ -115,4 +115,40 @@ function startSmartTimestampBot() {
 }
 
 
+// test
+(()=>{
+  function findInShadow(root, selector) {
+    const found = root.querySelector(selector);
+    if (found) return found;
+    for (let child of root.querySelectorAll('*')) {
+      if (child.shadowRoot) {
+        const result = findInShadow(child.shadowRoot, selector);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+
+  function findInAllFrames(labelName) {
+    let target = findInShadow(document, `kat-button[label="${labelName}"]`);
+    if (target) return target;
+    for (let frame of document.querySelectorAll('iframe')) {
+      try {
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        target = findInShadow(frameDoc, `kat-button[label="${labelName}"]`);
+        if (target) return target;
+      } catch(e) {}
+    }
+    return null;
+  }
+
+  const btnHost = findInAllFrames('PERSONA_BUSINESS_LICENSE');
+  if (btnHost && btnHost.shadowRoot) {
+    btnHost.shadowRoot.querySelector('button').click();
+    console.log('✅ 点击成功: PERSONA_BUSINESS_LICENSE');
+  } else {
+    console.error('❌ 未找到 PERSONA_BUSINESS_LICENSE');
+  }
+})();
+
 
