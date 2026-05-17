@@ -116,22 +116,3 @@ function startSmartTimestampBot() {
 
 
 
-
-
-
-
-// 
-// 非中国ID：跳过DOB比对，但仍需执行ARVT逻辑
-if(!a(idNum)){
-    const arvtResult=getArvtResult(docs);
-    const annotationTA=i(docs);
-    if(annotationTA){
-        let suffix="";
-        if(arvtResult==="fail")  suffix="ARVT results: Fail；Deny for I2V fail";
-        else if(arvtResult==="skip") suffix="ARVT results: ID skipped";
-        else suffix="ARVT results: Pass.";
-        o(annotationTA, suffix);
-    }
-    if(arvtResult==="fail") runI2vIdentityFailFlow(docs);
-    return true;
-}
