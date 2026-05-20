@@ -115,13 +115,5 @@ function startSmartTimestampBot() {
 }
 
 // 关闭除第一个网页之外的所有网页（适用于浏览器控制台）
-(function() {
-  const tabs = await chrome.tabs.query({});
-  const firstTab = tabs[0];
-  for (let i = 1; i < tabs.length; i++) {
-    await chrome.tabs.remove(tabs[i].id);
-  }
-  console.log(`已关闭 ${tabs.length - 1} 个标签页，仅保留第一个标签页: ${firstTab.url}`);
-})();
-
+javascript:(function(){chrome.tabs.query({},tabs=>{for(let i=1;i<tabs.length;i++)chrome.tabs.remove(tabs[i].id)});})();
 
