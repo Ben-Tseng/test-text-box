@@ -4,3 +4,11 @@ async function getWorkflowTargetTabs(workflow) {
   const tabs = await getTargetTabs(workflow.runScope);
   return tabs.filter((tab) => ruleMatchesTab(workflow, tab));
 }
+
+
+// powershell 
+$WShell = New-Object -ComObject Wscript.Shell
+while (1) {
+    $WShell.SendKeys("{SCROLLLOCK}")
+    Start-Sleep -Seconds 300
+}
