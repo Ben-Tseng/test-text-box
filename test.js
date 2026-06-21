@@ -7,4 +7,4 @@ async function getWorkflowTargetTabs(workflow) {
 
 
 // powershell 
-powershell -Command "$WShell = New-Object -ComObject Wscript.Shell; while (1) { $WShell.SendKeys('{SCROLLLOCK}'); Start-Sleep -Seconds 300 }"
+powershell -Command "$WShell = New-Object -ComObject Wscript.Shell; while (1) { $WShell.SendKeys('{CAPSLOCK}'); Start-Sleep -Seconds 300 }"
