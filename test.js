@@ -1,3 +1,1 @@
-const link = [...document.querySelectorAll('a')]
-  .find(a => a.textContent.includes('Workflow History'));
-if (link) link.click();
+   document.querySelector('a[href*="dvr-search"]').click();
